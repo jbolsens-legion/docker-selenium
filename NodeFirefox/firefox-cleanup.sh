@@ -5,7 +5,8 @@ set -e
 
 cleanup_stuck_firefox_processes() {
   echo -n "Killing Firefox processes older than ${SE_BROWSER_LEFTOVERS_PROCESSES_SECS} seconds... "
-  ps -e -o pid,etimes,command | grep -v grep | grep firefox-bin | awk '{if($2>'${SE_BROWSER_LEFTOVERS_PROCESSES_SECS}') print $0}' | awk '{print $1}' | xargs -r kill -9
+  # shellcheck disable=SC2009
+  ps -e -o pid,etimes,command | grep -v grep | grep firefox-bin | awk '{if($2>'"${SE_BROWSER_LEFTOVERS_PROCESSES_SECS}"') print $0}' | awk '{print $1}' | xargs -r kill -9
   echo "DONE."
 }
 
@@ -20,5 +21,5 @@ while :; do
 
   # Go to sleep for 1 hour
   echo "Cleanup daemon sleeping for ${SE_BROWSER_LEFTOVERS_INTERVAL_SECS} seconds."
-  sleep ${SE_BROWSER_LEFTOVERS_INTERVAL_SECS}
+  sleep "${SE_BROWSER_LEFTOVERS_INTERVAL_SECS}"
 done

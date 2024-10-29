@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 
-VIDEO_FOLDER=${VIDEO_FOLDER}
+VIDEO_FOLDER=${VIDEO_FOLDER:-${SE_VIDEO_FOLDER}}
 UPLOAD_CONFIG_DIRECTORY=${SE_UPLOAD_CONFIG_DIRECTORY:-"/opt/bin"}
 UPLOAD_CONFIG_FILE_NAME=${SE_UPLOAD_CONFIG_FILE_NAME:-"upload.conf"}
 UPLOAD_COMMAND=${SE_UPLOAD_COMMAND:-"copy"}
 UPLOAD_OPTS=${SE_UPLOAD_OPTS:-"-P --cutoff-mode SOFT --metadata --inplace"}
 UPLOAD_RETAIN_LOCAL_FILE=${SE_UPLOAD_RETAIN_LOCAL_FILE:-"false"}
 UPLOAD_PIPE_FILE_NAME=${SE_UPLOAD_PIPE_FILE_NAME:-"uploadpipe"}
-VIDEO_INTERNAL_UPLOAD=${VIDEO_INTERNAL_UPLOAD:-$SE_VIDEO_INTERNAL_UPLOAD}
+VIDEO_INTERNAL_UPLOAD=${VIDEO_INTERNAL_UPLOAD:-${SE_VIDEO_INTERNAL_UPLOAD}}
 VIDEO_UPLOAD_BATCH_CHECK=${SE_VIDEO_UPLOAD_BATCH_CHECK:-"10"}
 ts_format=${SE_LOG_TIMESTAMP_FORMAT:-"%Y-%m-%d %H:%M:%S,%3N"}
 process_name="video.uploader"
@@ -44,9 +44,9 @@ function rename_rclone_env() {
 list_rclone_pid=()
 function check_and_clear_background() {
   # Wait for a batch rclone processes to finish
-  if [ ${#list_rclone_pid[@]} -eq ${VIDEO_UPLOAD_BATCH_CHECK} ]; then
+  if [ ${#list_rclone_pid[@]} -eq "${VIDEO_UPLOAD_BATCH_CHECK}" ]; then
     for pid in "${list_rclone_pid[@]}"; do
-      wait ${pid}
+      wait "${pid}"
     done
     list_rclone_pid=()
   fi
@@ -57,7 +57,7 @@ function rclone_upload() {
   local source=$1
   local target=$2
   echo "$(date -u +"${ts_format}") [${process_name}] - Uploading ${source} to ${target}"
-  rclone --config ${UPLOAD_CONFIG_DIRECTORY}/${UPLOAD_CONFIG_FILE_NAME} ${UPLOAD_COMMAND} ${UPLOAD_OPTS} "${source}" "${target}" &
+  rclone --config "${UPLOAD_CONFIG_DIRECTORY}"/"${UPLOAD_CONFIG_FILE_NAME}" ${UPLOAD_COMMAND} "${UPLOAD_OPTS}" "${source}" "${target}" &
   list_rclone_pid+=($!)
   check_and_clear_background
 }
@@ -72,7 +72,7 @@ function check_if_pid_alive() {
 
 function consume_pipe_file_in_background() {
   echo "$(date -u +"${ts_format}") [${process_name}] - Start consuming pipe file to upload"
-  while read FILE DESTINATION <${UPLOAD_PIPE_FILE}; do
+  while read -r FILE DESTINATION <"${UPLOAD_PIPE_FILE}"; do
     if [ "${FILE}" = "exit" ]; then
       echo "$(date -u +"${ts_format}") [${process_name}] - Received exit signal. Aborting upload process"
       return 0

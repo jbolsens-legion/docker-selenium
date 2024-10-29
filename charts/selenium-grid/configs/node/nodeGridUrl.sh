@@ -8,10 +8,10 @@ if [ "${SE_SUB_PATH}" = "/" ]; then
   SE_SUB_PATH=""
 fi
 
-if [ -z "${SE_HUB_HOST:-$SE_ROUTER_HOST}" ] || [ -z "${SE_HUB_PORT:-$SE_ROUTER_PORT}" ]; then
+if [ -z "${SE_HUB_HOST:-${SE_ROUTER_HOST}}" ] || [ -z "${SE_HUB_PORT:-${SE_ROUTER_PORT}}" ]; then
   grid_url=""
 else
-  grid_url=${SE_SERVER_PROTOCOL}://${SE_HUB_HOST:-$SE_ROUTER_HOST}:${SE_HUB_PORT:-$SE_ROUTER_PORT}${SE_SUB_PATH}
+  grid_url=${SE_SERVER_PROTOCOL}://${SE_HUB_HOST:-${SE_ROUTER_HOST}}:${SE_HUB_PORT:-${SE_ROUTER_PORT}}${SE_SUB_PATH}
 fi
 
 if [ -z "${grid_url}" ]; then

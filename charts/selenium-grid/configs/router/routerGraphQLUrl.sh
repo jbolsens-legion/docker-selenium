@@ -1,6 +1,6 @@
 #!/bin/bash
 
-if [ -z "${SE_HUB_HOST:-$SE_ROUTER_HOST}" ] || [ -z "${SE_HUB_PORT:-$SE_ROUTER_PORT}" ]; then
+if [ -z "${SE_HUB_HOST:-${SE_ROUTER_HOST}}" ] || [ -z "${SE_HUB_PORT:-${SE_ROUTER_PORT}}" ]; then
   graphql_url=""
 else
 

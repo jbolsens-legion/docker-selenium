@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-NODE_CONFIG_DIRECTORY=${NODE_CONFIG_DIRECTORY:-"/opt/bin"}
+bash "${NODE_CONFIG_DIRECTORY}"/nodePreStop.sh
 #==============================================
 # OpenShift or non-sudo environments support
 # https://docs.openshift.com/container-platform/3.11/creating_images/guidelines.html#openshift-specific-guidelines
@@ -20,7 +20,7 @@ function shutdown {
   echo "Trapped SIGTERM/SIGINT/x so shutting down supervisord..."
   if [ "${SE_NODE_GRACEFUL_SHUTDOWN}" = "true" ]; then
     echo "Waiting for Selenium Node to shutdown gracefully..."
-    bash ${NODE_CONFIG_DIRECTORY}/nodePreStop.sh
+    bash "${NODE_CONFIG_DIRECTORY}"/nodePreStop.sh
   fi
   if [ -n "${SE_VIDEO_CONTAINER_NAME}" ]; then
     # For K8s, when video sidecar container and shareProcessNamespace are enabled in pod spec

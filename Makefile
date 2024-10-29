@@ -67,12 +67,18 @@ set_containerd_image_store:
 
 format_shell_scripts:
 	sudo apt-get update -qq ; \
-  sudo apt-get install -yq shfmt ; \
+  sudo apt-get install -yq shfmt shellcheck ; \
   shfmt -l -w -d $${PWD}/*.sh $${PWD}/**/*.sh $$PWD/**.sh $$PWD/**/generate_** $$PWD/**/wrap_* ; \
   git diff --stat --exit-code ; \
   EXIT_CODE=$$? ; \
   if [ $$EXIT_CODE -ne 0 ]; then \
 		echo "Some shell scripts are not formatted. Please run 'make format_shell_scripts' to format and update them." ; \
+		exit $$EXIT_CODE ; \
+	fi ; \
+	shellcheck */**.sh ; \
+	EXIT_CODE=$$? ; \
+	if [ $$EXIT_CODE -ne 0 ]; then \
+		echo "Some shell scripts have issues. Please fix them." ; \
 		exit $$EXIT_CODE ; \
 	fi ; \
   exit $$EXIT_CODE

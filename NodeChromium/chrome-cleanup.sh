@@ -5,13 +5,14 @@ set -e
 
 cleanup_stuck_chrome_processes() {
   echo -n "Killing Chrome processes older than ${SE_BROWSER_LEFTOVERS_PROCESSES_SECS} seconds... "
-  ps -e -o pid,etimes,command | grep -v grep | grep chromium/chromium | awk '{if($2>'${SE_BROWSER_LEFTOVERS_PROCESSES_SECS}') print $0}' | awk '{print $1}' | xargs -r kill -9
+  # shellcheck disable=SC2009
+  ps -e -o pid,etimes,command | grep -v grep | grep chromium/chromium | awk '{if($2>'"${SE_BROWSER_LEFTOVERS_PROCESSES_SECS}"') print $0}' | awk '{print $1}' | xargs -r kill -9
   echo "DONE."
 }
 
 cleanup_tmp_chrome_files() {
   echo -n "Deleting all Chrome files in /tmp... "
-  find /tmp -name ".com.google.Chrome.*" -type d -mtime +${SE_BROWSER_LEFTOVERS_TEMPFILES_DAYS} -exec rm -rf "{}" +
+  find /tmp -name ".com.google.Chrome.*" -type d -mtime +"${SE_BROWSER_LEFTOVERS_TEMPFILES_DAYS}" -exec rm -rf "{}" +
   echo "DONE."
 }
 
@@ -32,5 +33,5 @@ while :; do
 
   # Go to sleep for 1 hour
   echo "Cleanup daemon sleeping for ${SE_BROWSER_LEFTOVERS_INTERVAL_SECS} seconds."
-  sleep ${SE_BROWSER_LEFTOVERS_INTERVAL_SECS}
+  sleep "${SE_BROWSER_LEFTOVERS_INTERVAL_SECS}"
 done

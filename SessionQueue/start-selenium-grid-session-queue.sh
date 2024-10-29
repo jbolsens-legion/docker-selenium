@@ -13,10 +13,10 @@ function append_se_opts() {
     if [ "${log_message}" = "true" ]; then
       echo "Appending Selenium option: ${option} ${value}"
     else
-      echo "Appending Selenium option: ${option} $(mask ${value})"
+      echo "Appending Selenium option: ${option} $(mask "${value}")"
     fi
     SE_OPTS="${SE_OPTS} ${option}"
-    if [ ! -z "${value}" ]; then
+    if [ -n "${value}" ]; then
       SE_OPTS="${SE_OPTS} ${value}"
     fi
   else
@@ -24,62 +24,62 @@ function append_se_opts() {
   fi
 }
 
-if [ ! -z "$SE_OPTS" ]; then
+if [ -n "$SE_OPTS" ]; then
   echo "Appending Selenium options: ${SE_OPTS}"
 fi
 
-if [ ! -z "$SE_SESSION_QUEUE_HOST" ]; then
+if [ -n "$SE_SESSION_QUEUE_HOST" ]; then
   echo "Using SE_SESSION_QUEUE_HOST: ${SE_SESSION_QUEUE_HOST}"
   HOST_CONFIG="--host ${SE_SESSION_QUEUE_HOST}"
 fi
 
-if [ ! -z "$SE_SESSION_QUEUE_PORT" ]; then
+if [ -n "$SE_SESSION_QUEUE_PORT" ]; then
   echo "Using SE_SESSION_QUEUE_PORT: ${SE_SESSION_QUEUE_PORT}"
   PORT_CONFIG="--port ${SE_SESSION_QUEUE_PORT}"
 fi
 
-if [ ! -z "$SE_LOG_LEVEL" ]; then
+if [ -n "$SE_LOG_LEVEL" ]; then
   append_se_opts "--log-level" "${SE_LOG_LEVEL}"
 fi
 
-if [ ! -z "$SE_HTTP_LOGS" ]; then
+if [ -n "$SE_HTTP_LOGS" ]; then
   append_se_opts "--http-logs" "${SE_HTTP_LOGS}"
 fi
 
-if [ ! -z "$SE_STRUCTURED_LOGS" ]; then
+if [ -n "$SE_STRUCTURED_LOGS" ]; then
   append_se_opts "--structured-logs" "${SE_STRUCTURED_LOGS}"
 fi
 
-if [ ! -z "$SE_EXTERNAL_URL" ]; then
+if [ -n "$SE_EXTERNAL_URL" ]; then
   append_se_opts "--external-url" "${SE_EXTERNAL_URL}"
 fi
 
 if [ "${SE_ENABLE_TLS}" = "true" ]; then
   # Configure truststore for the server
-  if [ ! -z "$SE_JAVA_SSL_TRUST_STORE" ]; then
+  if [ -n "$SE_JAVA_SSL_TRUST_STORE" ]; then
     echo "Appending Java options: -Djavax.net.ssl.trustStore=${SE_JAVA_SSL_TRUST_STORE}"
     SE_JAVA_OPTS="$SE_JAVA_OPTS -Djavax.net.ssl.trustStore=${SE_JAVA_SSL_TRUST_STORE}"
   fi
   if [ -f "${SE_JAVA_SSL_TRUST_STORE_PASSWORD}" ]; then
     echo "Getting Truststore password from ${SE_JAVA_SSL_TRUST_STORE_PASSWORD} to set Java options: -Djavax.net.ssl.trustStorePassword"
-    SE_JAVA_SSL_TRUST_STORE_PASSWORD="$(cat ${SE_JAVA_SSL_TRUST_STORE_PASSWORD})"
+    SE_JAVA_SSL_TRUST_STORE_PASSWORD="$(cat "${SE_JAVA_SSL_TRUST_STORE_PASSWORD}")"
   fi
-  if [ ! -z "${SE_JAVA_SSL_TRUST_STORE_PASSWORD}" ]; then
-    echo "Appending Java options: -Djavax.net.ssl.trustStorePassword=$(mask ${SE_JAVA_SSL_TRUST_STORE_PASSWORD})"
+  if [ -n "${SE_JAVA_SSL_TRUST_STORE_PASSWORD}" ]; then
+    echo "Appending Java options: -Djavax.net.ssl.trustStorePassword=$(mask "${SE_JAVA_SSL_TRUST_STORE_PASSWORD}")"
     SE_JAVA_OPTS="$SE_JAVA_OPTS -Djavax.net.ssl.trustStorePassword=${SE_JAVA_SSL_TRUST_STORE_PASSWORD}"
   fi
   echo "Appending Java options: -Djdk.internal.httpclient.disableHostnameVerification=${SE_JAVA_DISABLE_HOSTNAME_VERIFICATION}"
   SE_JAVA_OPTS="$SE_JAVA_OPTS -Djdk.internal.httpclient.disableHostnameVerification=${SE_JAVA_DISABLE_HOSTNAME_VERIFICATION}"
   # Configure certificate and private key for component communication
-  if [ ! -z "$SE_HTTPS_CERTIFICATE" ]; then
+  if [ -n "$SE_HTTPS_CERTIFICATE" ]; then
     append_se_opts "--https-certificate" "${SE_HTTPS_CERTIFICATE}"
   fi
-  if [ ! -z "$SE_HTTPS_PRIVATE_KEY" ]; then
+  if [ -n "$SE_HTTPS_PRIVATE_KEY" ]; then
     append_se_opts "--https-private-key" "${SE_HTTPS_PRIVATE_KEY}"
   fi
 fi
 
-if [ ! -z "$SE_REGISTRATION_SECRET" ]; then
+if [ -n "$SE_REGISTRATION_SECRET" ]; then
   append_se_opts "--registration-secret" "${SE_REGISTRATION_SECRET}" "false"
 fi
 
@@ -90,7 +90,7 @@ if [ "$SE_ENABLE_TRACING" = "true" ]; then
   [ -n "$EXTRA_LIBS" ] && [ -n "${EXTERNAL_JARS}" ] && EXTRA_LIBS=${EXTRA_LIBS}:
   EXTRA_LIBS="--ext "${EXTRA_LIBS}${EXTERNAL_JARS}
   echo "Tracing is enabled"
-  echo "Classpath will be enriched with these external jars : " ${EXTRA_LIBS}
+  echo "Classpath will be enriched with these external jars : " "${EXTRA_LIBS}"
   if [ -n "$SE_OTEL_SERVICE_NAME" ]; then
     SE_OTEL_JVM_ARGS="$SE_OTEL_JVM_ARGS -Dotel.resource.attributes=service.name=${SE_OTEL_SERVICE_NAME}"
   fi
@@ -113,12 +113,12 @@ else
   echo "Tracing is disabled"
 fi
 
-java ${JAVA_OPTS:-$SE_JAVA_OPTS} \
+java "${JAVA_OPTS:-$SE_JAVA_OPTS}" \
   -jar /opt/selenium/selenium-server.jar \
-  ${EXTRA_LIBS} sessionqueue \
-  --session-request-timeout ${SE_SESSION_REQUEST_TIMEOUT} \
-  --session-retry-interval ${SE_SESSION_RETRY_INTERVAL} \
-  --bind-host ${SE_BIND_HOST} \
-  ${HOST_CONFIG} \
-  ${PORT_CONFIG} \
-  ${SE_OPTS}
+  "${EXTRA_LIBS}" sessionqueue \
+  --session-request-timeout "${SE_SESSION_REQUEST_TIMEOUT}" \
+  --session-retry-interval "${SE_SESSION_RETRY_INTERVAL}" \
+  --bind-host "${SE_BIND_HOST}" \
+  "${HOST_CONFIG}" \
+  "${PORT_CONFIG}" \
+  "${SE_OPTS}"

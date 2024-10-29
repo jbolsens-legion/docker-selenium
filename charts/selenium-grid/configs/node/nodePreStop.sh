@@ -24,7 +24,7 @@ function init_file() {
 init_file
 
 # Set headers if Node Registration Secret is set
-if [ ! -z "${SE_REGISTRATION_SECRET}" ]; then
+if [ -n "${SE_REGISTRATION_SECRET}" ]; then
   HEADERS="X-REGISTRATION-SECRET: ${SE_REGISTRATION_SECRET}"
 else
   HEADERS="X-REGISTRATION-SECRET;"

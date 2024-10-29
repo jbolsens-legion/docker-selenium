@@ -30,23 +30,23 @@ if [ -n "${GRAPHQL_ENDPOINT}" ]; then
     endpoint_checks=$(curl --noproxy "*" -m ${max_time} -k -X POST \
       -H "Content-Type: application/json" \
       -H "Authorization: Basic ${BASIC_AUTH}" \
-      --data '{"query":"{ session (id: \"'${SESSION_ID}'\") { id, capabilities, startTime, uri, nodeId, nodeUri, sessionDurationMillis, slot { id, stereotype, lastStarted } } } "}' \
+      --data '{"query":"{ session (id: \"'"${SESSION_ID}"'\") { id, capabilities, startTime, uri, nodeId, nodeUri, sessionDurationMillis, slot { id, stereotype, lastStarted } } } "}' \
       -s "${GRAPHQL_ENDPOINT}" -o "/tmp/graphQL_${SESSION_ID}.json" -w "%{http_code}")
     current_check=$((current_check + 1))
     # Check if the response contains "capabilities"
     if [[ $current_check -eq $retry_time ]]; then
       break
-    elif [[ "$endpoint_checks" = "200" ]] && [[ $(jq -e '.data.session.capabilities | fromjson | ."'se:vncEnabled'"' /tmp/graphQL_${SESSION_ID}.json >/dev/null) -eq 0 ]]; then
+    elif [[ "$endpoint_checks" = "200" ]] && [[ $(jq -e '.data.session.capabilities | fromjson | ."'se:vncEnabled'"' /tmp/graphQL_"${SESSION_ID}".json >/dev/null) -eq 0 ]]; then
       break
     fi
-    sleep ${poll_interval}
+    sleep "${poll_interval}"
   done
 
   if [[ -f "/tmp/graphQL_${SESSION_ID}.json" ]]; then
     # Extract the values from the response
-    RECORD_VIDEO=$(jq -r '.data.session.capabilities | fromjson | ."'${VIDEO_CAP_NAME}'"' /tmp/graphQL_${SESSION_ID}.json)
-    TEST_NAME=$(jq -r '.data.session.capabilities | fromjson | ."'${TEST_NAME_CAP}'"' /tmp/graphQL_${SESSION_ID}.json)
-    VIDEO_NAME=$(jq -r '.data.session.capabilities | fromjson | ."'${VIDEO_NAME_CAP}'"' /tmp/graphQL_${SESSION_ID}.json)
+    RECORD_VIDEO=$(jq -r '.data.session.capabilities | fromjson | ."'"${VIDEO_CAP_NAME}"'"' /tmp/graphQL_"${SESSION_ID}".json)
+    TEST_NAME=$(jq -r '.data.session.capabilities | fromjson | ."'"${TEST_NAME_CAP}"'"' /tmp/graphQL_"${SESSION_ID}".json)
+    VIDEO_NAME=$(jq -r '.data.session.capabilities | fromjson | ."'"${VIDEO_NAME_CAP}"'"' /tmp/graphQL_"${SESSION_ID}".json)
   fi
 fi
 
@@ -60,10 +60,6 @@ fi
 # Check if video file name is set via capabilities
 if [ "${VIDEO_NAME}" != "null" ] && [ -n "${VIDEO_NAME}" ]; then
   TEST_NAME="${VIDEO_NAME}"
-elif [ "${TEST_NAME}" != "null" ] && [ -n "${TEST_NAME}" ]; then
-  TEST_NAME="${TEST_NAME}"
-else
-  TEST_NAME=""
 fi
 
 # Check if append session ID to the video file name suffix
