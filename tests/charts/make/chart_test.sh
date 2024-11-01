@@ -22,6 +22,7 @@ HUB_CHECKS_INTERVAL=${HUB_CHECKS_INTERVAL:-45}
 HUB_CHECKS_MAX_ATTEMPTS=${HUB_CHECKS_MAX_ATTEMPTS:-6}
 WEB_DRIVER_WAIT_TIMEOUT=${WEB_DRIVER_WAIT_TIMEOUT:-120}
 AUTOSCALING_POLL_INTERVAL=${AUTOSCALING_POLL_INTERVAL:-20}
+SCALING_STRATEGY=${SCALING_STRATEGY:-"default"}
 SKIP_CLEANUP=${SKIP_CLEANUP:-"true"} # For debugging purposes, retain the cluster after the test run
 CHART_CERT_PATH=${CHART_CERT_PATH:-"${CHART_PATH}/certs/tls.crt"}
 SSL_CERT_DIR=${SSL_CERT_DIR:-"/etc/ssl/certs"}
@@ -159,11 +160,13 @@ if [ "${SELENIUM_GRID_AUTOSCALING}" = "true" ] && [ "${TEST_EXISTING_KEDA}" = "t
   HELM_COMMAND_SET_IMAGES="${HELM_COMMAND_SET_IMAGES} \
   --set autoscaling.enabled=false \
   --set autoscaling.enableWithExistingKEDA=true \
+  --set autoscaling.scaledJobOptions.scalingStrategy.strategy=${SCALING_STRATEGY} \
   "
 elif [ "${SELENIUM_GRID_AUTOSCALING}" = "true" ] && [ "${TEST_EXISTING_KEDA}" = "false" ]; then
   HELM_COMMAND_SET_IMAGES="${HELM_COMMAND_SET_IMAGES} \
   --set autoscaling.enabled=true \
   --set autoscaling.enableWithExistingKEDA=false \
+  --set autoscaling.scaledJobOptions.scalingStrategy.strategy=${SCALING_STRATEGY} \
   "
 fi
 

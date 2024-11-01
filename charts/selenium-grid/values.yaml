@@ -879,7 +879,7 @@ autoscaling:
     scalingStrategy:
       # Offer the strategy default with scaler calculation updated in https://github.com/SeleniumHQ/docker-selenium/tree/trunk/.keda/README.md
       # -- Scaling strategy for KEDA ScaledJob
-      strategy: default
+      strategy: accurate
     # -- Number of Completed jobs should be kept
     successfulJobsHistoryLimit: 0
     # -- Number of Failed jobs should be kept (for troubleshooting purposes)
