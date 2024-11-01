@@ -70,6 +70,10 @@ jobs:
             use-random-user: false
             test-video: false
             build-all: false
+          - test-strategy: test_node_relay_headless
+            use-random-user: false
+            test-video: false
+            build-all: false
     steps:
       - name: Free Disk Space (Ubuntu)
         uses: jlumbroso/free-disk-space@main

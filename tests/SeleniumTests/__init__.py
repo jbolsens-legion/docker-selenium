@@ -3,6 +3,7 @@ import concurrent.futures
 import os
 import traceback
 import time
+import random
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -38,9 +39,6 @@ CLIENT_CONFIG = ClientConfig(
     username=SELENIUM_GRID_USERNAME,
     password=SELENIUM_GRID_PASSWORD
 )
-
-if TEST_NODE_RELAY == 'Android':
-    time.sleep(90)
 
 class SeleniumGenericTests(unittest.TestCase):
 
@@ -92,7 +90,7 @@ class SeleniumGenericTests(unittest.TestCase):
             EC.element_to_be_clickable((By.TAG_NAME, 'flowplayer-play-icon'))
         )
         play_button.click()
-        video = driver.find_element(By.TAG_NAME, 'video')
+        time.sleep(1)
         wait.until(
             lambda d: d.find_element(By.TAG_NAME, 'video').get_property('currentTime')
         )
@@ -150,17 +148,16 @@ class ChromeTests(SeleniumGenericTests):
             options.set_capability('se:screenResolution', '1920x1080')
             if SELENIUM_GRID_TEST_HEADLESS:
                 options.add_argument('--headless=new')
-            if TEST_NODE_RELAY == 'Android':
-                options.set_capability('platformName', TEST_NODE_RELAY)
+            if TEST_NODE_RELAY != 'false':
+                options.set_capability('platformName', TEST_NODE_RELAY.replace('Headless', ''))
                 options.set_capability('appium:platformVersion', TEST_ANDROID_PLATFORM_API)
-                options.set_capability('appium:deviceName', 'emulator-5554')
                 options.set_capability('appium:automationName', 'uiautomator2')
                 options.set_capability('appium:browserName', 'chrome')
                 options.set_capability('appium:adbExecTimeout', 120000)
                 options.set_capability('appium:uiautomator2ServerInstallTimeout', 120000)
                 options.set_capability('appium:appWaitDuration', 120000)
                 options.set_capability('appium:suppressKillServer', True)
-                options.set_capability('appium:allowDelayAdb', False)
+                options.set_capability('appium:allowDelayAdb', True)
             else:
                 options.set_capability('platformName', 'Linux')
             start_time = time.time()
@@ -264,12 +261,15 @@ class Autoscaling():
             futures = []
             tests = []
             start_times = {}
+            mixed_tests = []
             for test_class in test_classes:
                 suite = unittest.TestLoader().loadTestsFromTestCase(test_class)
-                for test in suite:
-                    start_times[test] = time.time()
-                    futures.append(executor.submit(test))
-                    tests.append(test)
+                mixed_tests.extend(suite)
+                random.shuffle(mixed_tests)
+            for test in mixed_tests:
+                start_times[test] = time.time()
+                futures.append(executor.submit(test))
+                tests.append(test)
             print(f"Number of tests were added to worker: {len(tests)}")
             failed_tests = []
             for future, test in zip(concurrent.futures.as_completed(futures), tests):
@@ -321,7 +321,10 @@ class TestPlatform:
         tests = []
         for i in range(repeat):
             if TEST_PLATFORMS == 'linux/amd64':
-                tests.extend([FirefoxTests, ChromeTests, EdgeTests])
+                if TEST_NODE_RELAY == "false":
+                    tests.extend([FirefoxTests, ChromeTests, EdgeTests])
+                else:
+                    tests.extend([ChromeTests])
             else:
                 tests.extend([FirefoxTests, ChromeTests])
         return tests

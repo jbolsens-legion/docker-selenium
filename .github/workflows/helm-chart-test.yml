@@ -34,6 +34,13 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          - k8s-version: 'v1.24.17'
+            test-strategy: node_relay_command
+            cluster: 'minikube'
+            helm-version: 'v3.10.3'
+            docker-version: '24.0.9'
+            test-upgrade: false
+            service-mesh: false
           - k8s-version: 'v1.25.16'
             test-strategy: playwright_connect_grid
             cluster: 'minikube'

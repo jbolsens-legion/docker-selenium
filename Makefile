@@ -740,10 +740,14 @@ test_video: video hub chrome firefox edge chromium
 	done
 	make test_video_integrity
 
+test_node_relay_headless:
+	SELENIUM_GRID_TEST_HEADLESS=true PROFILE_ANDROID=AndroidHeadless ANDROID_PLATFORM_API=15 \
+	NODE_RELAY_URL=http://emulator-headless:4723 make test_node_relay
+
 test_node_relay: hub node_base standalone_firefox
 	sudo rm -rf ./tests/tests ./tests/videos; mkdir -p ./tests/videos ; \
 	if [ "$(PLATFORMS)" = "linux/amd64" ]; then \
-			list_nodes="Android NodeFirefox" ; \
+			list_nodes="$(or $(PROFILE_ANDROID), "Android") NodeFirefox" ; \
 	else \
 			list_nodes="NodeFirefox" ; \
 	fi; \
@@ -757,14 +761,16 @@ test_node_relay: hub node_base standalone_firefox
 			echo ANDROID_BASED_NAME=$(or $(ANDROID_BASED_NAME),budtmo) >> .env ; \
 			echo ANDROID_BASED_IMAGE=$(or $(ANDROID_BASED_IMAGE),docker-android) >> .env ; \
 			echo ANDROID_BASED_TAG=$(or $(ANDROID_BASED_TAG),emulator_14.0) >> .env ; \
-			echo ANDROID_PLATFORM_API=$(or $(ANDROID_PLATFORM_API),14) >> .env ; \
+			echo ANDROID_PLATFORM_API=$(or $(ANDROID_PLATFORM_API), 14) >> .env ; \
 			echo TEST_DELAY_AFTER_TEST=$(or $(TEST_DELAY_AFTER_TEST), 0) >> .env ; \
+			echo SELENIUM_GRID_TEST_HEADLESS=$(or $(SELENIUM_GRID_TEST_HEADLESS), "false") >> .env ; \
+			echo NODE_RELAY_URL=$(or $(NODE_RELAY_URL), "http://emulator:4723") >> .env ; \
 			echo NODE=$$node >> .env ; \
 			echo TEST_NODE_RELAY=$$node >> .env ; \
 			echo UID=$$(id -u) >> .env ; \
 			echo BINDING_VERSION=$(BINDING_VERSION) >> .env ; \
 			echo BASE_VERSION=$(BASE_VERSION) >> .env ; \
-			if [ $$node = "Android" ] ; then \
+			if [ $$node = "Android" ] || [ $$node = "AndroidHeadless" ] ; then \
 					echo BROWSER=firefox >> .env \
 					&& echo BROWSER_NAME=firefox >> .env ; \
 			fi ; \
@@ -960,6 +966,14 @@ chart_test_autoscaling_playwright_connect_grid:
 	VERSION=$(TAG_VERSION) VIDEO_TAG=$(FFMPEG_TAG_VERSION)-$(BUILD_DATE) KEDA_BASED_NAME=$(KEDA_BASED_NAME) KEDA_BASED_TAG=$(KEDA_BASED_TAG) NAMESPACE=$(NAMESPACE) BINDING_VERSION=$(BINDING_VERSION) BASE_VERSION=$(BASE_VERSION) \
 	TEMPLATE_OUTPUT_FILENAME="k8s_playwright_connect_grid_basicAuth_secureIngress_ingressPublicIP_autoScaling_patchKEDA.yaml" \
 	./tests/charts/make/chart_test.sh JobAutoscaling
+
+chart_test_autoscaling_node_relay_command:
+	PLATFORMS=$(PLATFORMS) CHART_ENABLE_TRACING=false SELENIUM_GRID_MONITORING=false CHART_ENABLE_BASIC_AUTH=false \
+	TEST_NODE_RELAY=Android ANDROID_PLATFORM_API=$(ANDROID_PLATFORM_API) SELENIUM_ENABLE_MANAGED_DOWNLOADS=false \
+	SELENIUM_GRID_PROTOCOL=http SELENIUM_GRID_HOST=$$(hostname -i) \
+	VERSION=$(TAG_VERSION) VIDEO_TAG=$(FFMPEG_TAG_VERSION)-$(BUILD_DATE) KEDA_BASED_NAME=$(KEDA_BASED_NAME) KEDA_BASED_TAG=$(KEDA_BASED_TAG) NAMESPACE=$(NAMESPACE) BINDING_VERSION=$(BINDING_VERSION) \
+	TEMPLATE_OUTPUT_FILENAME="k8s_playwright_connect_grid_basicAuth_secureIngress_ingressPublicIP_autoScaling_patchKEDA.yaml" \
+	./tests/charts/make/chart_test.sh NoAutoscaling
 
 chart_test_delete:
 	helm del test -n selenium || true

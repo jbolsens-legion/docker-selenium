@@ -57,6 +57,7 @@ TEST_PATCHED_KEDA=${TEST_PATCHED_KEDA:-"true"}
 BASIC_AUTH_EMBEDDED_URL=${BASIC_AUTH_EMBEDDED_URL:-"false"}
 SELENIUM_GRID_MONITORING=${SELENIUM_GRID_MONITORING:-"true"}
 TEST_EXISTING_PTS=${TEST_EXISTING_PTS:-"false"}
+TEST_NODE_RELAY=${TEST_NODE_RELAY:-"false"}
 
 cleanup() {
   # Get the list of pods
@@ -352,6 +353,12 @@ if [ "${SELENIUM_GRID_PROTOCOL}" = "https" ]; then
   "
 fi
 
+if [ "${TEST_NODE_RELAY}" != "false" ]; then
+  HELM_COMMAND_SET_BASE_VALUES="${HELM_COMMAND_SET_BASE_VALUES} \
+  --values ${TEST_VALUES_PATH}/base-relay-node-values.yaml \
+  "
+fi
+
 HELM_COMMAND_SET_BASE_VALUES="${HELM_COMMAND_SET_BASE_VALUES} \
 --values ${MATRIX_BROWSER_VALUES_FILE} \
 "
@@ -424,13 +431,18 @@ export WEB_DRIVER_WAIT_TIMEOUT=${WEB_DRIVER_WAIT_TIMEOUT}
 export SELENIUM_GRID_TEST_HEADLESS=${SELENIUM_GRID_TEST_HEADLESS:-"false"}
 export TEST_DELAY_AFTER_TEST=${TEST_DELAY_AFTER_TEST:-"0"}
 export TEST_PLATFORMS=${TEST_PLATFORMS}
+export TEST_NODE_RELAY=${TEST_NODE_RELAY}
 if [ "${MATRIX_BROWSER}" = "NoAutoscaling" ]; then
-  ./tests/bootstrap.sh NodeFirefox
-  if [ "${TEST_PLATFORMS}" = "linux/amd64" ]; then
+  if [ "${TEST_NODE_RELAY}" != "false" ]; then
     ./tests/bootstrap.sh NodeChrome
-    ./tests/bootstrap.sh NodeEdge
   else
-    ./tests/bootstrap.sh NodeChromium
+    ./tests/bootstrap.sh NodeFirefox
+    if [ "${TEST_PLATFORMS}" = "linux/amd64" ]; then
+      ./tests/bootstrap.sh NodeChrome
+      ./tests/bootstrap.sh NodeEdge
+    else
+      ./tests/bootstrap.sh NodeChromium
+    fi
   fi
 elif [ "${MATRIX_TESTS}" = "CDPTests" ]; then
   ./tests/CDPTests/bootstrap.sh "chrome"

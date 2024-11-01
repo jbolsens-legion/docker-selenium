@@ -1,0 +1,60 @@
+global:
+  seleniumGrid:
+    defaultComponentLivenessProbe: httpGet
+
+relayNode:
+  enabled: true
+  port: 6666
+  extraEnvironmentVariables:
+    - name: SE_NODE_RELAY_URL
+      value: "http://127.0.0.1:4723"
+    - name: SE_NODE_RELAY_PROTOCOL_VERSION
+      value: "HTTP/1.1"
+    - name: SE_NODE_RELAY_MAX_SESSIONS
+      value: "1"
+    - name: SE_NODE_RELAY_PLATFORM_NAME
+      value: "Android"
+    - name: SE_NODE_RELAY_PLATFORM_VERSION
+      value: "15"
+    - name: SE_NODE_RELAY_BROWSER_NAME
+      value: "chrome"
+    - name: SE_NODE_RELAY_WEB_VNC
+      value: "ws://emulator:6080/websockify"
+    - name: SE_START_VNC
+      value: "false"
+    - name: SE_START_NO_VNC
+      value: "false"
+    - name: SE_DRAIN_AFTER_SESSION_COUNT
+      value: "0"
+  extraVolumes:
+    - name: kvm
+      hostPath:
+        path: /dev/kvm
+        type: CharDevice
+
+  sidecars:
+    - name: emulator
+      image: docker.io/ndviet/android-emulator:android-35-x86_64-appium-2.12.1
+      imagePullPolicy: IfNotPresent
+      env:
+        - name: START_EMU_HEADLESS
+          value: "true"
+        - name: START_VNC
+          value: "true"
+        - name: START_APPIUM
+          value: "true"
+        - name: START_APPIUM_DELAY
+          value: "60"
+      ports:
+        - containerPort: 4723
+          protocol: TCP
+        - containerPort: 5900
+          protocol: TCP
+      volumeMounts:
+        - mountPath: /dev/kvm
+          name: kvm
+  videoRecorder:
+    videoRecorder:
+      extraEnvironmentVariables:
+        - name: DISPLAY_NUM
+          value: "0"
