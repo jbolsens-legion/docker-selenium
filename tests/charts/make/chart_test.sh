@@ -3,6 +3,7 @@ mkdir -p tests/tests
 set -o xtrace
 
 echo "Set ENV variables"
+RESOURCE_ID=$(openssl rand -hex 4)
 CLUSTER_NAME=${CLUSTER_NAME:-"chart-testing"}
 RELEASE_NAME=${RELEASE_NAME:-"test"}
 SELENIUM_NAMESPACE=${SELENIUM_NAMESPACE:-"selenium"}
@@ -22,6 +23,7 @@ HUB_CHECKS_INTERVAL=${HUB_CHECKS_INTERVAL:-45}
 HUB_CHECKS_MAX_ATTEMPTS=${HUB_CHECKS_MAX_ATTEMPTS:-6}
 WEB_DRIVER_WAIT_TIMEOUT=${WEB_DRIVER_WAIT_TIMEOUT:-120}
 AUTOSCALING_POLL_INTERVAL=${AUTOSCALING_POLL_INTERVAL:-20}
+SCALING_STRATEGY=${SCALING_STRATEGY:-"default"}
 SKIP_CLEANUP=${SKIP_CLEANUP:-"true"} # For debugging purposes, retain the cluster after the test run
 CHART_CERT_PATH=${CHART_CERT_PATH:-"${CHART_PATH}/certs/tls.crt"}
 SSL_CERT_DIR=${SSL_CERT_DIR:-"/etc/ssl/certs"}
@@ -47,7 +49,7 @@ if [ "${RELEASE_NAME}" = "selenium" ]; then
 else
   SELENIUM_TLS_SECRET_NAME="${RELEASE_NAME}-selenium-tls-secret"
 fi
-EXTERNAL_TLS_SECRET_NAME=${EXTERNAL_TLS_SECRET_NAME:-"external-tls-secret"}
+EXTERNAL_TLS_SECRET_NAME=${EXTERNAL_TLS_SECRET_NAME:-"external-tls-secret-${RESOURCE_ID}"}
 SELENIUM_ENABLE_MANAGED_DOWNLOADS=${SELENIUM_ENABLE_MANAGED_DOWNLOADS:-"true"}
 MAX_SESSIONS_CHROME=${MAX_SESSIONS_CHROME:-"1"}
 MAX_SESSIONS_FIREFOX=${MAX_SESSIONS_FIREFOX:-"1"}
@@ -55,6 +57,8 @@ MAX_SESSIONS_EDGE=${MAX_SESSIONS_EDGE:-"1"}
 TEST_NAME_OVERRIDE=${TEST_NAME_OVERRIDE:-"false"}
 TEST_PATCHED_KEDA=${TEST_PATCHED_KEDA:-"true"}
 BASIC_AUTH_EMBEDDED_URL=${BASIC_AUTH_EMBEDDED_URL:-"false"}
+SELENIUM_GRID_MONITORING=${SELENIUM_GRID_MONITORING:-"true"}
+TEST_EXISTING_PTS=${TEST_EXISTING_PTS:-"false"}
 
 cleanup() {
   # Get the list of pods
@@ -78,6 +82,9 @@ on_failure() {
     if [ ${RENDER_HELM_TEMPLATE_ONLY} = "true" ]; then
       exit $exit_status
     fi
+    kubectl get pods -A
+    echo "Get all resources in all namespaces"
+    kubectl get all -A >> tests/tests/describe_all_resources_${MATRIX_BROWSER}.txt
     echo "Describe all resources in the ${SELENIUM_NAMESPACE} namespace for debugging purposes"
     kubectl describe all -n ${SELENIUM_NAMESPACE} >> tests/tests/describe_all_resources_${MATRIX_BROWSER}.txt
     kubectl describe pod -n ${SELENIUM_NAMESPACE} >> tests/tests/describe_all_resources_${MATRIX_BROWSER}.txt
@@ -92,6 +99,12 @@ trap 'on_failure' ERR EXIT
 if [ "${RENDER_HELM_TEMPLATE_ONLY}" != "true" ]; then
   rm -rf tests/tests/*
   touch tests/tests/describe_all_resources_${MATRIX_BROWSER}.txt
+fi
+
+if [ "${RENDER_HELM_TEMPLATE_ONLY}" = "true" ]; then
+  KEDA_BASED_NAME="${NAMESPACE}"
+  KEDA_BASED_TAG="${KEDA_TAG_VERSION}-${BUILD_DATE}"
+  TEST_EXISTING_PTS="true"
 fi
 
 if [ -f .env ]
@@ -148,11 +161,25 @@ if [ "${SELENIUM_GRID_AUTOSCALING}" = "true" ] && [ "${TEST_EXISTING_KEDA}" = "t
   HELM_COMMAND_SET_IMAGES="${HELM_COMMAND_SET_IMAGES} \
   --set autoscaling.enabled=false \
   --set autoscaling.enableWithExistingKEDA=true \
+  --set autoscaling.scaledJobOptions.scalingStrategy.strategy=${SCALING_STRATEGY} \
   "
 elif [ "${SELENIUM_GRID_AUTOSCALING}" = "true" ] && [ "${TEST_EXISTING_KEDA}" = "false" ]; then
   HELM_COMMAND_SET_IMAGES="${HELM_COMMAND_SET_IMAGES} \
   --set autoscaling.enabled=true \
   --set autoscaling.enableWithExistingKEDA=false \
+  --set autoscaling.scaledJobOptions.scalingStrategy.strategy=${SCALING_STRATEGY} \
+  "
+fi
+
+if [ "${SELENIUM_GRID_MONITORING}" = "true" ] && [ "${TEST_EXISTING_PTS}" = "true" ]; then
+  HELM_COMMAND_SET_IMAGES="${HELM_COMMAND_SET_IMAGES} \
+  --set monitoring.enabled=false \
+  --set monitoring.enabledWithExistingAgent=true \
+  "
+elif [ "${SELENIUM_GRID_MONITORING}" = "true" ] && [ "${TEST_EXISTING_PTS}" = "false" ]; then
+  HELM_COMMAND_SET_IMAGES="${HELM_COMMAND_SET_IMAGES} \
+  --set monitoring.enabled=true \
+  --set monitoring.enabledWithExistingAgent=false \
   "
 fi
 
@@ -225,8 +252,6 @@ if [ "${SECURE_INGRESS_ONLY_GENERATE}" = "true" ] && [ "${RENDER_HELM_TEMPLATE_O
   --set tls.ingress.defaultSANList[0]=${SELENIUM_GRID_HOST} \
   --set tls.ingress.defaultIPList[0]=$(hostname -I | awk '{print $1}') \
   "
-  kubectl get secret ${SELENIUM_TLS_SECRET_NAME} -n ${SELENIUM_NAMESPACE} -o jsonpath="{.data.tls\.crt}" | base64 -d > ./tests/tests/tls.crt
-  CHART_CERT_PATH="./tests/tests/tls.crt"
 fi
 
 if [ "${SECURE_INGRESS_ONLY_DEFAULT}" = "true" ]; then
@@ -254,13 +279,14 @@ if [ "${SECURE_USE_EXTERNAL_CERT}" = "true" ] && [ "${RENDER_HELM_TEMPLATE_ONLY}
   --set ingress.nginx.sslSecret="${SELENIUM_NAMESPACE}/${EXTERNAL_TLS_SECRET_NAME}" \
   "
   cert_dir="./tests/tests"
-  ADD_IP_ADDRESS=hostname ./${CHART_PATH}/certs/gen-cert-helper.sh -d ${cert_dir}
-  kubectl delete secret -n ${SELENIUM_NAMESPACE} ${EXTERNAL_TLS_SECRET_NAME} --ignore-not-found=true
-  kubectl create secret generic -n ${SELENIUM_NAMESPACE} ${EXTERNAL_TLS_SECRET_NAME} \
-  --from-file=tls.crt=${cert_dir}/tls.crt \
-  --from-file=tls.key=${cert_dir}/tls.key \
-  --from-file=server.jks=${cert_dir}/server.jks \
-  --from-file=server.pass=${cert_dir}/server.pass
+  if [ ! -f "./tests/tests/tls.crt" ]; then
+    ADD_IP_ADDRESS=hostname ./${CHART_PATH}/certs/gen-cert-helper.sh -d ${cert_dir}
+    kubectl create secret generic -n ${SELENIUM_NAMESPACE} ${EXTERNAL_TLS_SECRET_NAME} \
+    --from-file=tls.crt=${cert_dir}/tls.crt \
+    --from-file=tls.key=${cert_dir}/tls.key \
+    --from-file=server.jks=${cert_dir}/server.jks \
+    --from-file=server.pass=${cert_dir}/server.pass
+  fi
   CHART_CERT_PATH="./tests/tests/tls.crt"
 fi
 
@@ -333,7 +359,7 @@ HELM_COMMAND_SET_BASE_VALUES="${HELM_COMMAND_SET_BASE_VALUES} \
 --values ${MATRIX_BROWSER_VALUES_FILE} \
 "
 
-if [ "${TEST_EXISTING_KEDA}" = "true" ] && [ "${TEST_UPGRADE_CHART}" != "true" ]; then
+if [ "${TEST_EXISTING_KEDA}" = "true" ] && [ "${TEST_UPGRADE_CHART}" != "true" ] && [ "${RENDER_HELM_TEMPLATE_ONLY}" != "true" ]; then
   if [ "${TEST_PATCHED_KEDA}" = "true" ]; then
     KEDA_SET_IMAGES="--set image.keda.registry=${KEDA_BASED_NAME} --set image.keda.repository=keda --set image.keda.tag=${KEDA_BASED_TAG} \
     --set image.metricsApiServer.registry=${KEDA_BASED_NAME} --set image.metricsApiServer.repository=keda-metrics-apiserver --set image.metricsApiServer.tag=${KEDA_BASED_TAG} \
@@ -354,9 +380,7 @@ elif [ "${TEST_EXISTING_KEDA}" != "true" ]; then
     "
   else
     HELM_COMMAND_SET_IMAGES="${HELM_COMMAND_SET_IMAGES} \
-    --set keda.image.keda.registry=null --set keda.image.keda.repository=null --set keda.image.keda.tag=null \
-    --set keda.image.metricsApiServer.registry=null --set keda.image.metricsApiServer.repository=null --set keda.image.metricsApiServer.tag=null \
-    --set keda.image.webhooks.registry=null --set keda.image.webhooks.repository=null --set keda.image.webhooks.tag=null \
+    --set keda.image=null \
     "
   fi
 fi
@@ -384,7 +408,7 @@ if [ "${TEST_UPGRADE_CHART}" = "true" ]; then
   exit 0
 fi
 
-if [ "${SECURE_INGRESS_ONLY_GENERATE}" = "true" ]; then
+if [ "${SECURE_INGRESS_ONLY_GENERATE}" = "true" ] && [ "${RENDER_HELM_TEMPLATE_ONLY}" != "true" ]; then
   kubectl get secret ${SELENIUM_TLS_SECRET_NAME} -n ${SELENIUM_NAMESPACE} -o jsonpath="{.data.tls\.crt}" | base64 -d > ./tests/tests/tls.crt
   CHART_CERT_PATH="./tests/tests/tls.crt"
 fi
@@ -411,6 +435,11 @@ if [ "${MATRIX_BROWSER}" = "NoAutoscaling" ]; then
   else
     ./tests/bootstrap.sh NodeChromium
   fi
+elif [ "${MATRIX_TESTS}" = "CDPTests" ]; then
+  ./tests/CDPTests/bootstrap.sh "chrome"
+  if [ "${TEST_PLATFORMS}" = "linux/amd64" ]; then
+    ./tests/CDPTests/bootstrap.sh "MicrosoftEdge"
+  fi
 else
   ./tests/bootstrap.sh ${MATRIX_BROWSER}
 fi
@@ -426,11 +455,5 @@ while true; do
     sleep 2
   fi
 done
-
-echo "Get pods status"
-kubectl get pods -n ${SELENIUM_NAMESPACE}
-
-echo "Get all resources in all namespaces"
-kubectl get all -A >> tests/tests/describe_all_resources_${MATRIX_BROWSER}.txt
 
 cleanup

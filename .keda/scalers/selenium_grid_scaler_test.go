@@ -1526,6 +1526,170 @@ func Test_getCountFromSeleniumResponse(t *testing.T) {
 			want:    2,
 			wantErr: false,
 		},
+		// Tests from PR: https://github.com/kedacore/keda/pull/6055
+		{
+			name: "sessions requests with matching browsername and platformName when setSessionsFromHub turned on and node with 1 slots matches should return count as 0",
+			args: args{
+				b: []byte(`{
+					"data": {
+						"grid": {
+							"sessionCount": 0,
+							"maxSession": 1,
+							"totalSlots": 1
+						},
+						"nodesInfo": {
+							"nodes": [
+								{
+									"id": "82ee33bd-390e-4dd6-aee2-06b17ecee18e",
+									"status": "UP",
+									"sessionCount": 0,
+									"maxSession": 1,
+									"slotCount": 1,
+									"stereotypes":"[{\"slots\":1,\"stereotype\":{\"browserName\":\"chrome\",\"platformName\":\"linux\"}}]",
+									"sessions": []
+								}
+							]
+						},
+						"sessionsInfo": {
+							"sessionQueueRequests": [
+								"{\n  \"browserName\": \"chrome\",\n \"platformName\": \"linux\"\n}",
+								"{\n  \"browserName\": \"chrome\",\n \"platformName\": \"Windows 11\"\n}"
+							]
+						}
+					}
+				}`),
+				browserName:        "chrome",
+				sessionBrowserName: "chrome",
+				browserVersion:     "latest",
+				platformName:       "linux",
+			},
+			want:    0,
+			wantErr: false,
+		},
+		{
+			name: "4 sessions requests with matching browsername and platformName when setSessionsFromHub turned on and node with 2 slots matches should return count as 2",
+			args: args{
+				b: []byte(`{
+					"data": {
+						"grid": {
+							"sessionCount": 0,
+							"maxSession": 2,
+							"totalSlots": 2
+						},
+						"nodesInfo": {
+							"nodes": [
+								{
+									"id": "82ee33bd-390e-4dd6-aee2-06b17ecee18e",
+									"status": "UP",
+									"sessionCount": 0,
+									"maxSession": 2,
+									"slotCount": 2,
+									"stereotypes":"[{\"slots\":2,\"stereotype\":{\"browserName\":\"chrome\",\"platformName\":\"linux\"}}]",
+									"sessions": [
+									]
+								}
+							]
+						},
+						"sessionsInfo": {
+							"sessionQueueRequests": [
+								"{\n  \"browserName\": \"chrome\",\n \"platformName\": \"linux\"\n}",
+								"{\n  \"browserName\": \"chrome\",\n \"platformName\": \"linux\"\n}",
+								"{\n  \"browserName\": \"chrome\",\n \"platformName\": \"linux\"\n}",
+								"{\n  \"browserName\": \"chrome\",\n \"platformName\": \"linux\"\n}",
+								"{\n  \"browserName\": \"chrome\",\n \"platformName\": \"Windows 11\"\n}"]
+						}
+					}
+				}`),
+				browserName:        "chrome",
+				sessionBrowserName: "chrome",
+				browserVersion:     "latest",
+				platformName:       "linux",
+			},
+			want:    2,
+			wantErr: false,
+		},
+		{
+			name: "4 sessions requests with matching browsername and platformName when setSessionsFromHub turned on, no nodes and sessionsPerNode=2 matches should return count as 2",
+			args: args{
+				b: []byte(`{
+					"data": {
+						"grid": {
+							"sessionCount": 0,
+							"maxSession": 0,
+							"totalSlots": 0
+						},
+						"nodesInfo": {
+							"nodes": []
+						},
+						"sessionsInfo": {
+							"sessionQueueRequests": [
+								"{\n  \"browserName\": \"chrome\",\n \"platformName\": \"linux\"\n}",
+								"{\n  \"browserName\": \"chrome\",\n \"platformName\": \"linux\"\n}",
+								"{\n  \"browserName\": \"chrome\",\n \"platformName\": \"linux\"\n}",
+								"{\n  \"browserName\": \"chrome\",\n \"platformName\": \"linux\"\n}",
+								"{\n  \"browserName\": \"chrome\",\n \"platformName\": \"Windows 11\"\n}"]
+						}
+					}
+				}`),
+				browserName:        "chrome",
+				sessionBrowserName: "chrome",
+				browserVersion:     "latest",
+				platformName:       "linux",
+				nodeMaxSessions:    2,
+			},
+			want:    2,
+			wantErr: false,
+		},
+		{
+			name: "sessions requests and active sessions with 1 matching browsername, platformName and sessionBrowserVersion should return count as 1",
+			args: args{
+				b: []byte(`{
+					"data": {
+						"grid": {
+							"sessionCount": 2,
+							"maxSession": 2,
+							"totalSlots": 2
+						},
+						"nodesInfo": {
+							"nodes": [
+								{
+									"id": "d44dcbc5-0b2c-4d5e-abf4-6f6aa5e0983c",
+									"status": "UP",
+									"sessionCount": 2,
+									"maxSession": 2,
+									"slotCount": 2,
+									"stereotypes":"[{\"slots\":2,\"stereotype\":{\"browserName\":\"chrome\",\"platformName\":\"linux\"}}]",
+									"sessions": [
+										{
+											"id": "0f9c5a941aa4d755a54b84be1f6535b1",
+											"capabilities": "{\n  \"acceptInsecureCerts\": false,\n  \"browserName\": \"chrome\",\n  \"browserVersion\": \"91.0.4472.114\",\n  \"chrome\": {\n    \"chromedriverVersion\": \"91.0.4472.101 (af52a90bf87030dd1523486a1cd3ae25c5d76c9b-refs\\u002fbranch-heads\\u002f4472@{#1462})\",\n    \"userDataDir\": \"\\u002ftmp\\u002f.com.google.Chrome.DMqx9m\"\n  },\n  \"goog:chromeOptions\": {\n    \"debuggerAddress\": \"localhost:35839\"\n  },\n  \"networkConnectionEnabled\": false,\n  \"pageLoadStrategy\": \"normal\",\n  \"platformName\": \"linux\",\n  \"proxy\": {\n  },\n  \"se:cdp\": \"http:\\u002f\\u002flocalhost:35839\",\n  \"se:cdpVersion\": \"91.0.4472.114\",\n  \"se:vncEnabled\": true,\n  \"se:vncLocalAddress\": \"ws:\\u002f\\u002flocalhost:7900\\u002fwebsockify\",\n  \"setWindowRect\": true,\n  \"strictFileInteractability\": false,\n  \"timeouts\": {\n    \"implicit\": 0,\n    \"pageLoad\": 300000,\n    \"script\": 30000\n  },\n  \"unhandledPromptBehavior\": \"dismiss and notify\",\n  \"webauthn:extension:largeBlob\": true,\n  \"webauthn:virtualAuthenticators\": true\n}",
+											"nodeId": "d44dcbc5-0b2c-4d5e-abf4-6f6aa5e0983c"
+										},
+										{
+											"id": "0f9c5a941aa4d755a54b84be1f6535b1",
+											"capabilities": "{\n  \"acceptInsecureCerts\": false,\n  \"browserName\": \"chrome\",\n  \"browserVersion\": \"91.0.4472.114\",\n  \"chrome\": {\n    \"chromedriverVersion\": \"91.0.4472.101 (af52a90bf87030dd1523486a1cd3ae25c5d76c9b-refs\\u002fbranch-heads\\u002f4472@{#1462})\",\n    \"userDataDir\": \"\\u002ftmp\\u002f.com.google.Chrome.DMqx9m\"\n  },\n  \"goog:chromeOptions\": {\n    \"debuggerAddress\": \"localhost:35839\"\n  },\n  \"networkConnectionEnabled\": false,\n  \"pageLoadStrategy\": \"normal\",\n  \"platformName\": \"linux\",\n  \"proxy\": {\n  },\n  \"se:cdp\": \"http:\\u002f\\u002flocalhost:35839\",\n  \"se:cdpVersion\": \"91.0.4472.114\",\n  \"se:vncEnabled\": true,\n  \"se:vncLocalAddress\": \"ws:\\u002f\\u002flocalhost:7900\\u002fwebsockify\",\n  \"setWindowRect\": true,\n  \"strictFileInteractability\": false,\n  \"timeouts\": {\n    \"implicit\": 0,\n    \"pageLoad\": 300000,\n    \"script\": 30000\n  },\n  \"unhandledPromptBehavior\": \"dismiss and notify\",\n  \"webauthn:extension:largeBlob\": true,\n  \"webauthn:virtualAuthenticators\": true\n}",
+											"nodeId": "d44dcbc5-0b2c-4d5e-abf4-6f6aa5e0983c"
+										}
+									]
+								}
+							]
+						},
+						"sessionsInfo": {
+							"sessionQueueRequests": [
+								"{\n  \"browserName\": \"chrome\",\n \"platformName\": \"linux\"\n}",
+								"{\n  \"browserName\": \"chrome\",\n \"platformName\": \"Windows 11\",\n \"browserVersion\": \"91.0\"\n}"
+							]
+						}
+					}
+				}`),
+				browserName:        "chrome",
+				sessionBrowserName: "chrome",
+				browserVersion:     "91.0.4472.114",
+				platformName:       "linux",
+			},
+			want:    1,
+			wantErr: false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -1639,6 +1803,34 @@ func Test_parseSeleniumGridScalerMetadata(t *testing.T) {
 				TargetValue:        1,
 				BrowserVersion:     "latest",
 				PlatformName:       "linux",
+				NodeMaxSessions:    1,
+			},
+		},
+		{
+			name: "valid username and password in AuthParams, url, browsername, and sessionbrowsername should return metadata",
+			args: args{
+				config: &scalersconfig.ScalerConfig{
+					AuthParams: map[string]string{
+						"username": "username",
+						"password": "password",
+					},
+					TriggerMetadata: map[string]string{
+						"url":                "http://selenium-hub:4444/graphql",
+						"browserName":        "MicrosoftEdge",
+						"sessionBrowserName": "msedge",
+					},
+				},
+			},
+			wantErr: false,
+			want: &seleniumGridScalerMetadata{
+				URL:                "http://selenium-hub:4444/graphql",
+				BrowserName:        "MicrosoftEdge",
+				SessionBrowserName: "msedge",
+				TargetValue:        1,
+				BrowserVersion:     "latest",
+				PlatformName:       "linux",
+				Username:           "username",
+				Password:           "password",
 				NodeMaxSessions:    1,
 			},
 		},
@@ -1761,19 +1953,21 @@ func Test_parseSeleniumGridScalerMetadata(t *testing.T) {
 			},
 		},
 		{
-			name: "valid url, browsername, unsafeSsl, activationThreshold, nodeMaxSessions and platformName should return metadata",
+			name: "valid url, browsername, unsafeSsl, activationThreshold, nodeMaxSessions and platformName with trigger auth params should return metadata",
 			args: args{
 				config: &scalersconfig.ScalerConfig{
 					TriggerMetadata: map[string]string{
 						"url":                 "http://selenium-hub:4444/graphql",
-						"username":            "user",
-						"password":            "password",
 						"browserName":         "chrome",
 						"browserVersion":      "91.0",
 						"unsafeSsl":           "true",
 						"activationThreshold": "10",
 						"platformName":        "Windows 11",
 						"nodeMaxSessions":     "3",
+					},
+					AuthParams: map[string]string{
+						"username": "user",
+						"password": "password",
 					},
 				},
 			},
@@ -1782,6 +1976,110 @@ func Test_parseSeleniumGridScalerMetadata(t *testing.T) {
 				URL:                 "http://selenium-hub:4444/graphql",
 				Username:            "user",
 				Password:            "password",
+				BrowserName:         "chrome",
+				SessionBrowserName:  "chrome",
+				TargetValue:         1,
+				ActivationThreshold: 10,
+				BrowserVersion:      "91.0",
+				UnsafeSsl:           true,
+				PlatformName:        "Windows 11",
+				NodeMaxSessions:     3,
+			},
+		},
+		{
+			name: "url in trigger auth param takes precedence over url in trigger metadata",
+			args: args{
+				config: &scalersconfig.ScalerConfig{
+					TriggerMetadata: map[string]string{
+						"url":                 "http://invalid.dns:4444/graphql",
+						"browserName":         "chrome",
+						"browserVersion":      "91.0",
+						"unsafeSsl":           "true",
+						"activationThreshold": "10",
+						"platformName":        "Windows 11",
+						"nodeMaxSessions":     "3",
+					},
+					AuthParams: map[string]string{
+						"url":      "http://selenium-hub:4444/graphql",
+						"username": "user",
+						"password": "password",
+					},
+				},
+			},
+			wantErr: false,
+			want: &seleniumGridScalerMetadata{
+				URL:                 "http://selenium-hub:4444/graphql",
+				Username:            "user",
+				Password:            "password",
+				BrowserName:         "chrome",
+				SessionBrowserName:  "chrome",
+				TargetValue:         1,
+				ActivationThreshold: 10,
+				BrowserVersion:      "91.0",
+				UnsafeSsl:           true,
+				PlatformName:        "Windows 11",
+				NodeMaxSessions:     3,
+			},
+		},
+		{
+			name: "auth type is not Basic and access token is provided",
+			args: args{
+				config: &scalersconfig.ScalerConfig{
+					TriggerMetadata: map[string]string{
+						"url":                 "http://selenium-hub:4444/graphql",
+						"browserName":         "chrome",
+						"browserVersion":      "91.0",
+						"unsafeSsl":           "true",
+						"activationThreshold": "10",
+						"platformName":        "Windows 11",
+						"nodeMaxSessions":     "3",
+					},
+					AuthParams: map[string]string{
+						"url":         "http://selenium-hub:4444/graphql",
+						"authType":    "OAuth2",
+						"accessToken": "my-access-token",
+					},
+				},
+			},
+			wantErr: false,
+			want: &seleniumGridScalerMetadata{
+				URL:                 "http://selenium-hub:4444/graphql",
+				AuthType:            "OAuth2",
+				AccessToken:         "my-access-token",
+				BrowserName:         "chrome",
+				SessionBrowserName:  "chrome",
+				TargetValue:         1,
+				ActivationThreshold: 10,
+				BrowserVersion:      "91.0",
+				UnsafeSsl:           true,
+				PlatformName:        "Windows 11",
+				NodeMaxSessions:     3,
+			},
+		},
+		{
+			name: "authenticating with bearer access token",
+			args: args{
+				config: &scalersconfig.ScalerConfig{
+					TriggerMetadata: map[string]string{
+						"browserName":         "chrome",
+						"browserVersion":      "91.0",
+						"unsafeSsl":           "true",
+						"activationThreshold": "10",
+						"platformName":        "Windows 11",
+						"nodeMaxSessions":     "3",
+					},
+					AuthParams: map[string]string{
+						"url":         "http://selenium-hub:4444/graphql",
+						"authType":    "Bearer",
+						"accessToken": "my-access-token",
+					},
+				},
+			},
+			wantErr: false,
+			want: &seleniumGridScalerMetadata{
+				URL:                 "http://selenium-hub:4444/graphql",
+				AuthType:            "Bearer",
+				AccessToken:         "my-access-token",
 				BrowserName:         "chrome",
 				SessionBrowserName:  "chrome",
 				TargetValue:         1,

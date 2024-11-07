@@ -5,7 +5,7 @@ set -e
 
 HOST="localhost"
 PORT="4444"
-BASIC_AUTH="$(echo -n "${SE_ROUTER_USERNAME}:${SE_ROUTER_PASSWORD}" | base64)"
+BASIC_AUTH="$(echo -en "${SE_ROUTER_USERNAME}:${SE_ROUTER_PASSWORD}" | base64 -w0)"
 
 echoerr() { echo "$@" 1>&2; }
 
@@ -27,4 +27,4 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-curl -skSL -H "Authorization: Basic ${BASIC_AUTH}" ${SE_SERVER_PROTOCOL:-"http"}://${HOST}:${PORT}/wd/hub/status | jq -r '.value.ready' | grep -q "true" || exit 1
+curl -skSL --noproxy "*" -H "Authorization: Basic ${BASIC_AUTH}" ${SE_SERVER_PROTOCOL:-"http"}://${HOST}:${PORT}/wd/hub/status | jq -r '.value.ready' | grep -q "true" || exit 1

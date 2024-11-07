@@ -7,11 +7,11 @@ global:
     # -- Image registry for all selenium components
     imageRegistry: selenium
     # -- Image tag for all selenium components
-    imageTag: 4.25.0-20240922
+    imageTag: 4.26.0-20241101
     # -- Image tag for browser's nodes
-    nodesImageTag: 4.25.0-20240922
+    nodesImageTag: 4.26.0-20241101
     # -- Image tag for browser's video recorder
-    videoImageTag: ffmpeg-7.0.2-20240922
+    videoImageTag: ffmpeg-7.1-20241101
     # -- kubectl image is used to execute kubectl commands in utility jobs
     kubectlImage: bitnami/kubectl:latest
     # -- Pull secret for all components, can be overridden individually
@@ -34,7 +34,7 @@ global:
     httpLogs: false
     updateStrategy:
       # -- Specify update strategy for all components, can be overridden individually
-      type: Recreate
+      type: RollingUpdate
       # type: RollingUpdate
       # -- Specify for strategy RollingUpdate
       rollingUpdate:
@@ -152,6 +152,11 @@ rbacRole:
         - keda.sh
       resources:
         - scaledobjects
+      verbs: [get, list, patch, update, delete]
+    - apiGroups:
+        - keda.sh
+      resources:
+        - triggerauthentication
       verbs: [get, list, patch, update, delete]
     - apiGroups:
         - autoscaling
@@ -791,6 +796,31 @@ tracing:
 monitoring:
   enabled: false
   enabledWithExistingAgent: false
+  exporter:
+    nameOverride: ""
+    imageRegistry: "ricardbejarano"
+    imageName: "graphql_exporter"
+    imageTag: "latest"
+    # -- Custom pull secret for container in patch job
+    imagePullSecret: ""
+    annotations: {}
+    port: 9199
+    service:
+      # -- Create a service for exporter
+      enabled: true
+      # -- Service type
+      type: ClusterIP
+      # -- Set specific loadBalancerIP when serviceType is LoadBalancer (see https://kubernetes.io/docs/concepts/services-networking/service/#loadbalancer)
+      loadBalancerIP: ""
+      # -- Node port for service
+      nodePort: 30199
+      # -- Annotations for exporter service
+      annotations: {}
+    replicas: 1
+  additionalScrapeConfigs:
+    key: ""
+    value: ""
+  annotations: {}
 
 # Keda scaled object configuration
 autoscaling:
@@ -829,11 +859,11 @@ autoscaling:
     # -- Define resources for container in patch job
     resources:
       requests:
-        cpu: 10m
-        memory: 10Mi
+        cpu: 100m
+        memory: 200Mi
       limits:
-        cpu: 50m
-        memory: 50Mi
+        cpu: 200m
+        memory: 500Mi
   # -- Options for KEDA scaled resources (keep only common options used for both ScaledJob and ScaledObject)
   scaledOptions:
     # -- Minimum number of replicas
@@ -849,7 +879,7 @@ autoscaling:
     scalingStrategy:
       # Offer the strategy default with scaler calculation updated in https://github.com/SeleniumHQ/docker-selenium/tree/trunk/.keda/README.md
       # -- Scaling strategy for KEDA ScaledJob
-      strategy: default
+      strategy: accurate
     # -- Number of Completed jobs should be kept
     successfulJobsHistoryLimit: 0
     # -- Number of Failed jobs should be kept (for troubleshooting purposes)
@@ -959,7 +989,7 @@ chromeNode:
   # Service configuration
   service:
     # -- Create a service for node
-    enabled: true
+    enabled: false
     # -- Service type
     type: ClusterIP
     # -- Set specific loadBalancerIP when serviceType is LoadBalancer (see https://kubernetes.io/docs/concepts/services-networking/service/#loadbalancer)
@@ -1052,6 +1082,8 @@ chromeNode:
   # It means it will add a new container to the deployment itself.
   # It should be set using the --set-json option
   sidecars: []
+  # -- Override specific video recording settings for chrome node
+  videoRecorder: {}
 
 # Configuration for firefox nodes
 firefoxNode:
@@ -1140,7 +1172,7 @@ firefoxNode:
   # Service configuration
   service:
     # -- Create a service for node
-    enabled: true
+    enabled: false
     # -- Service type
     type: ClusterIP
     # -- Set specific loadBalancerIP when serviceType is LoadBalancer (see https://kubernetes.io/docs/concepts/services-networking/service/#loadbalancer)
@@ -1232,6 +1264,8 @@ firefoxNode:
   # It means it will add a new container to the deployment itself.
   # It should be set using the --set-json option
   sidecars: []
+  # -- Override specific video recording settings for firefox node
+  videoRecorder: {}
 
 # Configuration for edge nodes
 edgeNode:
@@ -1320,7 +1354,7 @@ edgeNode:
   # Service configuration
   service:
     # -- Create a service for node
-    enabled: true
+    enabled: false
     # -- Service type
     type: ClusterIP
     # -- Set specific loadBalancerIP when serviceType is LoadBalancer (see https://kubernetes.io/docs/concepts/services-networking/service/#loadbalancer)
@@ -1412,7 +1446,193 @@ edgeNode:
   # It means it will add a new container to the deployment itself.
   # It should be set using the --set-json option
   sidecars: []
+  # -- Override specific video recording settings for edge node
+  videoRecorder: {}
 
+# Configuration for relay nodes
+relayNode:
+  # -- Enable relay nodes
+  enabled: false
+
+  # -- NOTE: Only used when autoscaling.enabled is false
+  # Enable creation of Deployment
+  # true (default) - if you want long-living pods
+  # false - for provisioning your own custom type such as Jobs
+  deploymentEnabled: true
+  # -- Global update strategy will be overwritten by individual component
+  updateStrategy:
+    type: RollingUpdate
+  # -- Number of relay nodes
+  replicas: 1
+  # -- Registry to pull the image (this overwrites global.seleniumGrid.imageRegistry parameter)
+  imageRegistry:
+  # -- Image of relay nodes
+  imageName: node-base
+  # -- Image of relay nodes (this overwrites global.seleniumGrid.nodesImageTag)
+  imageTag:
+  # -- Image pull policy (see https://kubernetes.io/docs/concepts/containers/images/#updating-images)
+  imagePullPolicy: IfNotPresent
+  # -- Image pull secret (see https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/)
+  imagePullSecret: ""
+
+  # -- Extra ports list to enable on the node container (e.g. SSH, VNC, NoVNC, etc.)
+  ports: []
+  # - 5900
+  # - 7900
+  # -- Node component port
+  port: 5555
+  # -- Node component expose NodePort
+  nodePort:
+  # -- Specify affinity for relay-node pods, this overwrites global.seleniumGrid.affinity parameter
+  affinity: {}
+  # -- Specify topologySpreadConstraints for relay-node pods, this overwrites global.seleniumGrid.topologySpreadConstraints parameter
+  topologySpreadConstraints: []
+  # -- Annotations for relay-node pods
+  annotations: {}
+  # -- Labels for relay-node pods
+  labels: {}
+  # -- Shared process namespace for relay-node pods
+  shareProcessNamespace: true
+  # Resources for relay-node container
+  resources:
+    # -- Request resources for relay-node pods
+    requests:
+      memory: "1Gi"
+      cpu: "1"
+    # -- Limit resources for relay-node pods
+    limits:
+      memory: "2Gi"
+      cpu: "1"
+  # -- SecurityContext for relay-node container
+  securityContext: {}
+  # -- Tolerations for relay-node pods
+  tolerations: []
+  # -- Node selector for relay-node pods
+  nodeSelector: {}
+  # -- Custom host aliases for relay nodes
+  hostAliases:
+  # - ip: "198.51.100.0"
+  #   hostnames:
+  #     - "example.com"
+  #     - "example.net"
+  # - ip: "203.0.113.0"
+  #   hostnames:
+  #     - "example.org"
+  # -- Custom environment variables for relay nodes
+  extraEnvironmentVariables:
+  # - name: SE_JAVA_OPTS
+  #   value: "-Xmx512m"
+  # - name:
+  #   valueFrom:
+  #     secretKeyRef:
+  #       name: secret-name
+  #       key: secret-key
+  # -- Custom environment variables by sourcing entire configMap, Secret, etc. for relay nodes
+  extraEnvFrom:
+  # - configMapRef:
+  #   name: proxy-settings
+  # - secretRef:
+  #   name: mysecret
+  # Service configuration
+  service:
+    # -- Create a service for node
+    enabled: false
+    # -- Service type
+    type: ClusterIP
+    # -- Set specific loadBalancerIP when serviceType is LoadBalancer (see https://kubernetes.io/docs/concepts/services-networking/service/#loadbalancer)
+    loadBalancerIP: ""
+    # -- Extra ports exposed in node service
+    ports:
+    # - name: vnc-port
+    #   port: 5900
+    #   targetPort: 5900
+    # -- Custom annotations for service
+    annotations: {}
+  # -- Size limit for DSH volume mounted in container (if not set, default is disabled, e.g "1Gi")
+  dshmVolumeSizeLimit: ""
+  # -- Priority class name for relay-node pods
+  priorityClassName: ""
+
+  # -- Startup probe settings
+  startupProbe:
+    enabled: true
+    path: /status
+    initialDelaySeconds: 0
+    periodSeconds: 5
+    timeoutSeconds: 60
+    failureThreshold: 12
+    successThreshold: 1
+
+  # -- Readiness probe settings
+  readinessProbe:
+    enabled: false
+    path: /status
+    initialDelaySeconds: 10
+    failureThreshold: 10
+    timeoutSeconds: 10
+    periodSeconds: 10
+    successThreshold: 1
+
+  # -- Liveness probe settings
+  livenessProbe:
+    enabled: false
+    path: /status
+    initialDelaySeconds: 30
+    failureThreshold: 6
+    timeoutSeconds: 60
+    periodSeconds: 10
+    successThreshold: 1
+
+  # -- Time to wait for pod termination
+  terminationGracePeriodSeconds: 30
+  # -- Define preStop command to shut down the relay node gracefully. This overwrites autoscaling.deregisterLifecycle
+  deregisterLifecycle:
+  # -- Define postStart and preStop events. This overwrites the defined preStop in deregisterLifecycle if any
+  lifecycle: {}
+  # -- Extra volume mounts for relay-node container
+  extraVolumeMounts: []
+  # - name: my-extra-volume
+  #   mountPath: /home/seluser/Downloads
+
+  # -- Extra volumes for relay-node pod
+  extraVolumes: []
+  # - name: my-extra-volume
+  #   emptyDir: {}
+  # - name: my-extra-volume-from-pvc
+  #   persistentVolumeClaim:
+  #     claimName: my-pv-claim
+
+  # -- Override the number of max sessions per node
+  nodeMaxSessions:
+  # -- Override the scaled options for relay nodes
+  scaledOptions:
+  # -- Override the scaledJobOptions for relay nodes
+  scaledJobOptions:
+  # -- Override the scaledObjectOptions for relay nodes
+  scaledObjectOptions:
+  hpa:
+    # -- browserName from the capability
+    browserName: "chrome"
+    # -- sessionBrowserName if the browserName is different from the sessionBrowserName
+    sessionBrowserName: ""
+    # -- platformName from the capability
+    platformName: "Android"
+    # browserVersion: '91.0' # Optional. Only required when supporting multiple versions of browser in your Selenium Grid.
+    # -- Skip check SSL when connecting to the Graphql endpoint
+    unsafeSsl: '{{ template "seleniumGrid.graphqlURL.unsafeSsl" . }}'  # Optional
+
+  # -- It is used to add initContainers in the same pod of the browser node.
+  # It should be set using the --set-json option
+  initContainers: []
+
+  # -- It is used to add sidecars proxy in the same pod of the browser node.
+  # It means it will add a new container to the deployment itself.
+  # It should be set using the --set-json option
+  sidecars: []
+  # -- Override specific video recording settings for edge node
+  videoRecorder: {}
+
+# Video recording configuration for all browser nodes. Can be overridden by each browser node
 videoRecorder:
   # -- Enable video recording in all browser nodes
   enabled: false
@@ -1553,15 +1773,15 @@ keda:
     keda:
       registry: selenium
       repository: keda
-      tag: "2.15.1-selenium-grid-20240922"
+      tag: "2.15.1-selenium-grid-20241101"
     metricsApiServer:
       registry: selenium
       repository: keda-metrics-apiserver
-      tag: "2.15.1-selenium-grid-20240922"
+      tag: "2.15.1-selenium-grid-20241101"
     webhooks:
       registry: selenium
       repository: keda-admission-webhooks
-      tag: "2.15.1-selenium-grid-20240922"
+      tag: "2.15.1-selenium-grid-20241101"
   # -- Annotations for KEDA resources
   additionalAnnotations:
   http:
@@ -1581,6 +1801,12 @@ ingress-nginx:
 kube-prometheus-stack:
   # enabled: false
   cleanPrometheusOperatorObjectNames: true
+  prometheus:
+    prometheusSpec:
+      additionalConfig:
+        additionalScrapeConfigs:
+          name: '{{ template "seleniumGrid.monitoring.exporter.fullname" $ }}'
+          key: '{{ template "seleniumGrid.monitoring.scrape.key" $ }}'
 
 # -- Configuration for dependency chart jaeger
 jaeger:

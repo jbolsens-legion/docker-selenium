@@ -1,3 +1,86 @@
+## :heavy_check_mark: selenium-grid-0.37.0
+
+- Chart is using image tag 4.26.0-20241101
+- Chart is tested on Kubernetes versions: v1.25.16, v1.26.15, v1.27.16, v1.28.15, v1.29.10, v1.30.6, v1.31.2, 
+- Chart is tested on container runtime Docker versions: 24.0.9, 24.0.9, 24.0.9, 24.0.9, 25.0.5, 26.1.4, 27.2.0, 
+- Chart is tested on Helm versions: v3.10.3, v3.11.3, v3.12.3, v3.13.3, v3.14.3, v3.15.4, v3.16.1, 
+
+### Changed
+- [`6ce652ba`](http://github.com/seleniumhq/docker-selenium/commit/6ce652ba6ec1108d7ce05b4af5ea140d73873b59) - Update tag 4.26.0-20241101 in docs and files :: Selenium CI Bot
+- [`b41b6271`](http://github.com/seleniumhq/docker-selenium/commit/b41b62713a67488634861a52c8c6444e1b6beb71) - chart: set job scaling strategy to accurate by default :: Viet Nguyen Duc
+- [`a862efa3`](http://github.com/seleniumhq/docker-selenium/commit/a862efa3026a5aba100721ff83d858f67a1eafc7) - chart: Add templates for relay node (#2453) :: Viet Nguyen Duc
+- [`1fdc58bf`](http://github.com/seleniumhq/docker-selenium/commit/1fdc58bf072b7a276d8f33639a681f1d1c7cd3bc) - chart: Allow overwrite config videoRecorder in each node (#2445) :: Viet Nguyen Duc
+- [`3290a305`](http://github.com/seleniumhq/docker-selenium/commit/3290a305c0d122ce90d5301b96f46dc0728e33e8) - Update chart 0.36.5 changelog [skip ci] :: Selenium CI Bot
+
+### Experimental
+- Selenium Grid Scaler implementation preview. [README](https://github.com/seleniumhq/docker-selenium/tree/trunk/.keda/README.md)
+
+## :heavy_check_mark: selenium-grid-0.36.5
+
+- Chart is using image tag 4.25.0-20241024
+- Chart is tested on Kubernetes versions: v1.25.16, v1.26.15, v1.27.16, v1.28.15, v1.29.10, v1.30.6, v1.31.2, 
+- Chart is tested on container runtime Docker versions: 24.0.9, 24.0.9, 24.0.9, 24.0.9, 25.0.5, 26.1.4, 27.2.0, 
+- Chart is tested on Helm versions: v3.10.3, v3.11.3, v3.12.3, v3.13.3, v3.14.3, v3.15.4, v3.16.1, 
+
+### Changed
+- [`653af3e2`](http://github.com/seleniumhq/docker-selenium/commit/653af3e22860eea2fd236c8289c874ba15837a98) - Update tag 4.25.0-20241024 in docs and files :: Selenium CI Bot
+- [`42a7ecdb`](http://github.com/seleniumhq/docker-selenium/commit/42a7ecdbc745441309a66eb079d74a910276bb56) - Update log timestamp in custom scripts align with supervisord (#2441) :: Viet Nguyen Duc
+
+### Experimental
+- Selenium Grid Scaler implementation preview. [README](https://github.com/seleniumhq/docker-selenium/tree/trunk/.keda/README.md)
+
+## :heavy_check_mark: selenium-grid-0.36.4
+
+- Chart is using image tag 4.25.0-20241010
+- Chart is tested on Kubernetes versions: v1.25.16, v1.26.15, v1.27.16, v1.28.14, v1.29.9, v1.30.5, v1.31.1, 
+- Chart is tested on container runtime Docker versions: 24.0.9, 24.0.9, 24.0.9, 24.0.9, 25.0.5, 26.1.4, 27.2.0, 
+- Chart is tested on Helm versions: v3.10.3, v3.11.3, v3.12.3, v3.13.3, v3.14.3, v3.15.4, v3.16.1, 
+
+### Fixed
+- [`ec01d2f5`](http://github.com/seleniumhq/docker-selenium/commit/ec01d2f5fe22a3ba0932b4e095a083585abbc134) - fix: bash avoiding newline when Base64 encoding a long string (#2437) :: Viet Nguyen Duc
+
+### Changed
+- [`022c35f6`](http://github.com/seleniumhq/docker-selenium/commit/022c35f68f825540f6cde72f5c0d379b54156e29) - chore(deps): update helm release keda to v2.15.2 (#2433) :: renovate[bot]
+- [`36ba1870`](http://github.com/seleniumhq/docker-selenium/commit/36ba1870f113aba414a08dd1211d5fc5409ff370) - Update chart 0.36.3 changelog [skip ci] :: Selenium CI Bot
+
+### Experimental
+- Selenium Grid Scaler implementation preview. [README](https://github.com/seleniumhq/docker-selenium/tree/trunk/.keda/README.md)
+
+## :heavy_check_mark: selenium-grid-0.36.3
+
+- Chart is using image tag 4.25.0-20241010
+- Chart is tested on Kubernetes versions: v1.25.16, v1.26.15, v1.27.16, v1.28.14, v1.29.9, v1.30.5, v1.31.1, 
+- Chart is tested on container runtime Docker versions: 24.0.9, 24.0.9, 24.0.9, 24.0.9, 25.0.5, 26.1.4, 27.2.0, 
+- Chart is tested on Helm versions: v3.10.3, v3.11.3, v3.12.3, v3.13.3, v3.14.3, v3.15.4, v3.16.1, 
+
+### Changed
+- [`b86c952c`](http://github.com/seleniumhq/docker-selenium/commit/b86c952c5c450ad96eb9eae336aa6ab5eebf3b99) - chart(update): template remove redundant newlines :: Viet Nguyen Duc
+- [`e7ca1dcd`](http://github.com/seleniumhq/docker-selenium/commit/e7ca1dcd85545ea5ae920634be671d1f48e885a0) - chart(update): Node deployment replicas use minReplicaCount in autoscaling (#2430) :: Viet Nguyen Duc
+- [`94da26e6`](http://github.com/seleniumhq/docker-selenium/commit/94da26e6cc421d781cb0456497fa852b5cbb79fe) - chart(update): use podIP in all components server host (#2429) :: Viet Nguyen Duc
+- [`5802c323`](http://github.com/seleniumhq/docker-selenium/commit/5802c323459957f7032065a1fee84703d7ec0150) - Update chart 0.36.2 changelog [skip ci] :: Selenium CI Bot
+
+### Experimental
+- Selenium Grid Scaler implementation preview. [README](https://github.com/seleniumhq/docker-selenium/tree/trunk/.keda/README.md)
+
+## :heavy_check_mark: selenium-grid-0.36.2
+
+- Chart is using image tag 4.25.0-20241010
+- Chart is tested on Kubernetes versions: v1.25.16, v1.26.15, v1.27.16, v1.28.14, v1.29.9, v1.30.5, v1.31.1, 
+- Chart is tested on container runtime Docker versions: 24.0.9, 24.0.9, 24.0.9, 24.0.9, 25.0.5, 26.1.4, 27.2.0, 
+- Chart is tested on Helm versions: v3.10.3, v3.11.3, v3.12.3, v3.13.3, v3.14.3, v3.15.4, v3.16.1, 
+
+### Changed
+- [`72387472`](http://github.com/seleniumhq/docker-selenium/commit/723874729ab63018fc0405490a6f3313ca575ddd) - Update tag 4.25.0-20241010 in docs and files :: Selenium CI Bot
+- [`c3ad0995`](http://github.com/seleniumhq/docker-selenium/commit/c3ad0995c9288c39e62e91978ab96c0b253753bc) - Update chart configuration table :: Selenium CI Bot
+- [`be2a920f`](http://github.com/seleniumhq/docker-selenium/commit/be2a920f723d75ca4725e7b22b94324682b04b78) - chore(deps): update helm release kube-prometheus-stack to v65 (#2422) :: renovate[bot]
+- [`ef2c6c49`](http://github.com/seleniumhq/docker-selenium/commit/ef2c6c493ca41b3f2760b93a5678725bdcccd808) - chore(deps): update helm release ingress-nginx to v4.11.3 (#2424) :: renovate[bot]
+- [`ea7b913c`](http://github.com/seleniumhq/docker-selenium/commit/ea7b913c8d58ffcff0923c2ff128b4ccf135b82e) - chart(feat): add graphql metrics exporter for monitoring (#2425) :: Viet Nguyen Duc
+- [`1a9aa386`](http://github.com/seleniumhq/docker-selenium/commit/1a9aa386352050a357abdc5cfbbcf5ea01cc1e71) - chart(fix): node.lifecycle not being rendered from values file (#2420) :: Bruno Brito
+- [`dedd69b1`](http://github.com/seleniumhq/docker-selenium/commit/dedd69b113dfae966fd58b79338a136f40fea8fc) - Update chart 0.36.1 changelog [skip ci] :: Selenium CI Bot
+
+### Experimental
+- Selenium Grid Scaler implementation preview. [README](https://github.com/seleniumhq/docker-selenium/tree/trunk/.keda/README.md)
+
 ## :heavy_check_mark: selenium-grid-0.36.1
 
 - Chart is using image tag 4.25.0-20240922

@@ -83,7 +83,7 @@ elif [ "${CLUSTER}" = "minikube" ]; then
     rm -rf minikube-linux-$(dpkg --print-architecture)
     echo "==============================="
     echo "Installing Go"
-    GO_VERSION="1.22.3"
+    GO_VERSION="1.23.2"
     curl -sLO https://go.dev/dl/go$GO_VERSION.linux-$(dpkg --print-architecture).tar.gz
     sudo tar -xf go$GO_VERSION.linux-$(dpkg --print-architecture).tar.gz -C /usr/local
     rm -rf go$GO_VERSION.linux-$(dpkg --print-architecture).tar.gz*
@@ -161,8 +161,9 @@ rm -rf ct.tar.gz
 ct version
 echo "==============================="
 echo "Installing helm-docs for AMD64 / ARM64"
-go install github.com/norwoodj/helm-docs/cmd/helm-docs@latest
-$HOME/go/bin/helm-docs -h
+mkdir -p $HOME/go/bin
+GOBIN=$HOME/go/bin go install github.com/norwoodj/helm-docs/cmd/helm-docs@latest
+$HOME/go/bin/helm-docs -h || true
 echo "==============================="
 echo "Installing envsubst for AMD64 / ARM64"
 ENVSUBST_VERSION="v1.4.2"
@@ -172,3 +173,12 @@ chmod +x envsubst
 sudo mv envsubst /usr/local/bin
 sudo ln -sf /usr/local/bin/envsubst /usr/bin/envsubst
 echo "==============================="
+echo "Installing Node for AMD64 / ARM64"
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.0/install.sh | bash
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
+source $HOME/.bashrc
+nvm install --lts
+node --version
+npm --version

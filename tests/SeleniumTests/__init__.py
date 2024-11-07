@@ -3,6 +3,7 @@ import concurrent.futures
 import os
 import traceback
 import time
+import random
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -10,12 +11,14 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.firefox.options import Options as FirefoxOptions
 from selenium.webdriver.edge.options import Options as EdgeOptions
 from selenium.webdriver.chrome.options import Options as ChromeOptions
+from selenium.webdriver.remote.client_config import ClientConfig
 
 SELENIUM_GRID_PROTOCOL = os.environ.get('SELENIUM_GRID_PROTOCOL', 'http')
 SELENIUM_GRID_HOST = os.environ.get('SELENIUM_GRID_HOST', 'localhost')
 SELENIUM_GRID_PORT = os.environ.get('SELENIUM_GRID_PORT', '4444')
-SELENIUM_GRID_USERNAME = os.environ.get('SELENIUM_GRID_USERNAME', '')
-SELENIUM_GRID_PASSWORD = os.environ.get('SELENIUM_GRID_PASSWORD', '')
+SELENIUM_GRID_USERNAME = os.environ.get('SELENIUM_GRID_USERNAME', None)
+SELENIUM_GRID_PASSWORD = os.environ.get('SELENIUM_GRID_PASSWORD', None)
+CHART_CERT_PATH = os.environ.get('CHART_CERT_PATH', None)
 SELENIUM_GRID_TEST_HEADLESS = os.environ.get('SELENIUM_GRID_TEST_HEADLESS', 'false').lower() == 'true'
 SELENIUM_ENABLE_MANAGED_DOWNLOADS = os.environ.get('SELENIUM_ENABLE_MANAGED_DOWNLOADS', 'true').lower() == 'true'
 WEB_DRIVER_WAIT_TIMEOUT = int(os.environ.get('WEB_DRIVER_WAIT_TIMEOUT', 60))
@@ -27,9 +30,17 @@ TEST_ANDROID_PLATFORM_API = os.environ.get('ANDROID_PLATFORM_API')
 TEST_PLATFORMS = os.environ.get('TEST_PLATFORMS', 'linux/amd64')
 TEST_FIREFOX_INSTALL_LANG_PACKAGE = os.environ.get('TEST_FIREFOX_INSTALL_LANG_PACKAGE', 'false').lower() == 'true'
 TEST_ADD_CAPS_RECORD_VIDEO = os.environ.get('TEST_ADD_CAPS_RECORD_VIDEO', 'true').lower() == 'true'
+TEST_CUSTOM_SPECIFIC_NAME = os.environ.get('TEST_CUSTOM_SPECIFIC_NAME', 'false').lower() == 'true'
 
-if SELENIUM_GRID_USERNAME and SELENIUM_GRID_PASSWORD:
-    SELENIUM_GRID_HOST = f"{SELENIUM_GRID_USERNAME}:{SELENIUM_GRID_PASSWORD}@{SELENIUM_GRID_HOST}"
+SELENIUM_GRID_URL = "%s://%s:%s" % (SELENIUM_GRID_PROTOCOL,SELENIUM_GRID_HOST,SELENIUM_GRID_PORT)
+CLIENT_CONFIG = ClientConfig(
+    remote_server_addr=SELENIUM_GRID_URL,
+    keep_alive=True,
+    timeout=3600,
+    username=SELENIUM_GRID_USERNAME,
+    password=SELENIUM_GRID_PASSWORD,
+    ca_certs=CHART_CERT_PATH,
+)
 
 if TEST_NODE_RELAY == 'Android':
     time.sleep(90)
@@ -98,7 +109,6 @@ class SeleniumGenericTests(unittest.TestCase):
         driver = self.driver
         driver.get('https://the-internet.herokuapp.com/download')
         file_name = 'some-file.txt'
-        is_continue = True
         wait = WebDriverWait(driver, 30)
         file_link = wait.until(
             EC.element_to_be_clickable((By.LINK_TEXT, file_name))
@@ -114,6 +124,9 @@ class SeleniumGenericTests(unittest.TestCase):
         self.assertTrue(str(driver.get_downloadable_files()[0]).endswith(file_name))
 
     def tearDown(self):
+        if TEST_CUSTOM_SPECIFIC_NAME:
+            self.assertTrue(str(self.driver.capabilities['myApp:version']) == 'beta')
+            self.assertTrue(str(self.driver.capabilities['myApp:publish']) == 'internal')
         try:
             if TEST_DELAY_AFTER_TEST:
                 time.sleep(TEST_DELAY_AFTER_TEST)
@@ -129,9 +142,13 @@ class ChromeTests(SeleniumGenericTests):
         try:
             options = ChromeOptions()
             options.enable_downloads = SELENIUM_ENABLE_MANAGED_DOWNLOADS
-            options.add_argument('disable-features=DownloadBubble,DownloadBubbleV2')
+            if not SELENIUM_ENABLE_MANAGED_DOWNLOADS:
+                options.add_argument('disable-features=DownloadBubble,DownloadBubbleV2')
             if TEST_ADD_CAPS_RECORD_VIDEO:
                 options.set_capability('se:recordVideo', True)
+            if TEST_CUSTOM_SPECIFIC_NAME:
+                options.set_capability('myApp:version', 'beta')
+                options.set_capability('myApp:publish', 'internal')
             options.set_capability('se:name', f"{self._testMethodName} ({self.__class__.__name__})")
             options.set_capability('se:screenResolution', '1920x1080')
             if SELENIUM_GRID_TEST_HEADLESS:
@@ -152,7 +169,8 @@ class ChromeTests(SeleniumGenericTests):
             start_time = time.time()
             self.driver = webdriver.Remote(
                 options=options,
-                command_executor="%s://%s:%s" % (SELENIUM_GRID_PROTOCOL,SELENIUM_GRID_HOST,SELENIUM_GRID_PORT)
+                command_executor=SELENIUM_GRID_URL,
+                client_config=CLIENT_CONFIG
             )
             end_time = time.time()
             print(f"Begin: {self._testMethodName} ({self.__class__.__name__}) WebDriver initialization completed in {end_time - start_time} (s)")
@@ -166,9 +184,13 @@ class EdgeTests(SeleniumGenericTests):
         try:
             options = EdgeOptions()
             options.enable_downloads = SELENIUM_ENABLE_MANAGED_DOWNLOADS
-            options.add_argument('disable-features=DownloadBubble,DownloadBubbleV2')
+            if not SELENIUM_ENABLE_MANAGED_DOWNLOADS:
+                options.add_argument('disable-features=DownloadBubble,DownloadBubbleV2')
             if TEST_ADD_CAPS_RECORD_VIDEO:
                 options.set_capability('se:recordVideo', True)
+            if TEST_CUSTOM_SPECIFIC_NAME:
+                options.set_capability('myApp:version', 'beta')
+                options.set_capability('myApp:publish', 'internal')
             options.set_capability('se:name', f"{self._testMethodName} ({self.__class__.__name__})")
             options.set_capability('se:screenResolution', '1920x1080')
             if SELENIUM_GRID_TEST_HEADLESS:
@@ -176,7 +198,8 @@ class EdgeTests(SeleniumGenericTests):
             start_time = time.time()
             self.driver = webdriver.Remote(
                 options=options,
-                command_executor="%s://%s:%s" % (SELENIUM_GRID_PROTOCOL,SELENIUM_GRID_HOST,SELENIUM_GRID_PORT)
+                command_executor=SELENIUM_GRID_URL,
+                client_config=CLIENT_CONFIG
             )
             end_time = time.time()
             print(f"Begin: {self._testMethodName} ({self.__class__.__name__}) WebDriver initialization completed in {end_time - start_time} (s)")
@@ -189,15 +212,19 @@ class FirefoxTests(SeleniumGenericTests):
     def setUp(self):
         try:
             profile = webdriver.FirefoxProfile()
-            profile.set_preference("browser.download.manager.showWhenStarting", False)
-            profile.set_preference("browser.helperApps.neverAsk.saveToDisk", "*/*")
+            options = FirefoxOptions()
+            options.enable_downloads = SELENIUM_ENABLE_MANAGED_DOWNLOADS
+            if not SELENIUM_ENABLE_MANAGED_DOWNLOADS:
+                profile.set_preference("browser.download.manager.showWhenStarting", False)
+                profile.set_preference("browser.helperApps.neverAsk.saveToDisk", "*/*")
             profile.set_preference('intl.accept_languages', 'vi-VN,vi')
             profile.set_preference('intl.locale.requested', 'vi-VN,vi')
-            options = FirefoxOptions()
             options.profile = profile
-            options.enable_downloads = SELENIUM_ENABLE_MANAGED_DOWNLOADS
             if TEST_ADD_CAPS_RECORD_VIDEO:
                 options.set_capability('se:recordVideo', True)
+            if TEST_CUSTOM_SPECIFIC_NAME:
+                options.set_capability('myApp:version', 'beta')
+                options.set_capability('myApp:publish', 'internal')
             options.set_capability('se:name', f"{self._testMethodName} ({self.__class__.__name__})")
             options.set_capability('se:screenResolution', '1920x1080')
             if SELENIUM_GRID_TEST_HEADLESS:
@@ -205,7 +232,8 @@ class FirefoxTests(SeleniumGenericTests):
             start_time = time.time()
             self.driver = webdriver.Remote(
                 options=options,
-                command_executor="%s://%s:%s" % (SELENIUM_GRID_PROTOCOL,SELENIUM_GRID_HOST,SELENIUM_GRID_PORT)
+                command_executor=SELENIUM_GRID_URL,
+                client_config=CLIENT_CONFIG
             )
             end_time = time.time()
             print(f"Begin: {self._testMethodName} ({self.__class__.__name__}) WebDriver initialization completed in {end_time - start_time} (s)")
@@ -239,12 +267,15 @@ class Autoscaling():
             futures = []
             tests = []
             start_times = {}
+            mixed_tests = []
             for test_class in test_classes:
                 suite = unittest.TestLoader().loadTestsFromTestCase(test_class)
-                for test in suite:
-                    start_times[test] = time.time()
-                    futures.append(executor.submit(test))
-                    tests.append(test)
+                mixed_tests.extend(suite)
+                random.shuffle(mixed_tests)
+            for test in mixed_tests:
+                start_times[test] = time.time()
+                futures.append(executor.submit(test))
+                tests.append(test)
             print(f"Number of tests were added to worker: {len(tests)}")
             failed_tests = []
             for future, test in zip(concurrent.futures.as_completed(futures), tests):

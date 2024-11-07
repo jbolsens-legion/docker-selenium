@@ -1,4 +1,4 @@
-FROM ubuntu:noble-20240827.1
+FROM ubuntu:noble-20241011
 ARG AUTHORS=SeleniumHQ
 LABEL authors="${AUTHORS} <selenium-developers@googlegroups.com>"
 LABEL org.opencontainers.image.source="https://github.com/${AUTHORS}/docker-selenium"
@@ -7,9 +7,9 @@ LABEL org.opencontainers.image.source="https://github.com/${AUTHORS}/docker-sele
 ARG VERSION
 ARG RELEASE=selenium-${VERSION}
 # Default value should be aligned with upstream Selenium (https://github.com/SeleniumHQ/selenium/blob/trunk/MODULE.bazel)
-ARG OPENTELEMETRY_VERSION=1.42.1
-ARG GRPC_VERSION=1.66.0
-ARG NETTY_VERSION=4.1.113.Final
+ARG OPENTELEMETRY_VERSION=1.43.0
+ARG GRPC_VERSION=1.68.0
+ARG NETTY_VERSION=4.1.114.Final
 ARG CS_VERSION=2.1.13
 
 #Arguments to define the user running Selenium
@@ -60,6 +60,7 @@ RUN --mount=type=secret,id=SEL_PASSWD \
     supervisor \
     gnupg2 \
     libnss3-tools \
+    python3-pip \
     openjdk-${JRE_VERSION}-jre-headless \
   && if [ "${TARGETARCH}" = "arm" ] && [ "${TARGETVARIANT}" = "v7" ]; then \
        export ARCH=armhf ; \
@@ -155,6 +156,7 @@ RUN /opt/bin/add-jks-helper.sh -d /opt/selenium/secrets \
     # Boolean value, maps "--bind-host"
 ENV SE_BIND_HOST=false \
     SE_SERVER_PROTOCOL="http" \
+    CONFIG_FILE="/opt/selenium/config.toml" \
     # Boolean value, maps "--reject-unsupported-caps"
     SE_REJECT_UNSUPPORTED_CAPS=false \
     SE_OTEL_JAVA_GLOBAL_AUTOCONFIGURE_ENABLED=true \
@@ -163,6 +165,7 @@ ENV SE_BIND_HOST=false \
     SE_SUPERVISORD_CHILD_LOG_DIR="/tmp" \
     SE_SUPERVISORD_LOG_FILE="/tmp/supervisord.log" \
     SE_SUPERVISORD_PID_FILE="/tmp/supervisord.pid" \
+    SE_LOG_TIMESTAMP_FORMAT="%Y-%m-%d %H:%M:%S,%3N" \
     SE_LOG_LEVEL="INFO" \
     SE_HTTP_LOGS=false \
     SE_STRUCTURED_LOGS=false \

@@ -207,6 +207,10 @@ class ChartTemplateTests(unittest.TestCase):
                         video_container = container
                     if container['name'] == 's3':
                         uploader_container = container
+                # Test for case override upload config in Edge node
+                if doc['metadata']['name'] == '{0}selenium-edge-node'.format(RELEASE_NAME):
+                    self.assertTrue(uploader_container is None, "Video uploader should be disabled in Edge node config")
+                    continue
                 list_volume_mounts = None
                 if uploader_container is not None:
                     list_volume_mounts = uploader_container['volumeMounts']
@@ -278,7 +282,7 @@ class ChartTemplateTests(unittest.TestCase):
                 count_rolling += 1
             if doc['metadata']['name'] in recreate and doc['kind'] == 'Deployment':
                 logger.info(f"Assert updateStrategy is set in resource {doc['metadata']['name']}")
-                self.assertTrue(doc['spec']['strategy']['type'] == 'Recreate', f"Resource {doc['metadata']['name']} doesn't have strategy Recreate")
+                self.assertTrue(doc['spec']['strategy']['type'] == 'RollingUpdate', f"Resource {doc['metadata']['name']} doesn't have strategy RollingUpdate")
                 count_recreate += 1
         self.assertEqual(count_rolling, len(rolling), "No deployment resources found with strategy RollingUpdate")
         self.assertEqual(count_recreate, len(recreate), "No deployment resources found with strategy Recreate")

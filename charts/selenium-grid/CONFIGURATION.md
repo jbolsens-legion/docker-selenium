@@ -1,6 +1,6 @@
 # selenium-grid
 
-![Version: 0.36.1](https://img.shields.io/badge/Version-0.36.1-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 4.25.0-20240922](https://img.shields.io/badge/AppVersion-4.25.0--20240922-informational?style=flat-square)
+![Version: 0.37.0](https://img.shields.io/badge/Version-0.37.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 4.26.0-20241101](https://img.shields.io/badge/AppVersion-4.26.0--20241101-informational?style=flat-square)
 
 A Helm chart for creating a Selenium Grid Server in Kubernetes
 
@@ -19,9 +19,9 @@ A Helm chart for creating a Selenium Grid Server in Kubernetes
 | Repository | Name | Version |
 |------------|------|---------|
 | https://jaegertracing.github.io/helm-charts | jaeger | 3.3.1 |
-| https://kedacore.github.io/charts | keda | 2.15.1 |
-| https://kubernetes.github.io/ingress-nginx | ingress-nginx | 4.11.2 |
-| https://prometheus-community.github.io/helm-charts | kube-prometheus-stack | 62.7.0 |
+| https://kedacore.github.io/charts | keda | 2.15.2 |
+| https://kubernetes.github.io/ingress-nginx | ingress-nginx | 4.11.3 |
+| https://prometheus-community.github.io/helm-charts | kube-prometheus-stack | 65.2.0 |
 
 ## Values
 
@@ -29,9 +29,9 @@ A Helm chart for creating a Selenium Grid Server in Kubernetes
 |-----|------|---------|-------------|
 | global.K8S_PUBLIC_IP | string | `""` | Public IP of the host running Kubernetes cluster. This is used to access the Selenium Grid from outside the cluster when ingress is disabled or enabled without a hostname is set. This is part of constructing SE_NODE_GRID_URL and rewrite URL of `se:vnc`, `se:cdp` in the capabilities when `ingress.hostname` is unset |
 | global.seleniumGrid.imageRegistry | string | `"selenium"` | Image registry for all selenium components |
-| global.seleniumGrid.imageTag | string | `"4.25.0-20240922"` | Image tag for all selenium components |
-| global.seleniumGrid.nodesImageTag | string | `"4.25.0-20240922"` | Image tag for browser's nodes |
-| global.seleniumGrid.videoImageTag | string | `"ffmpeg-7.0.2-20240922"` | Image tag for browser's video recorder |
+| global.seleniumGrid.imageTag | string | `"4.26.0-20241101"` | Image tag for all selenium components |
+| global.seleniumGrid.nodesImageTag | string | `"4.26.0-20241101"` | Image tag for browser's nodes |
+| global.seleniumGrid.videoImageTag | string | `"ffmpeg-7.1-20241101"` | Image tag for browser's video recorder |
 | global.seleniumGrid.kubectlImage | string | `"bitnami/kubectl:latest"` | kubectl image is used to execute kubectl commands in utility jobs |
 | global.seleniumGrid.imagePullSecret | string | `""` | Pull secret for all components, can be overridden individually |
 | global.seleniumGrid.logLevel | string | `"INFO"` | Log level for all components. Possible values describe here: https://www.selenium.dev/documentation/grid/configuration/cli_options/#logging |
@@ -42,7 +42,7 @@ A Helm chart for creating a Selenium Grid Server in Kubernetes
 | global.seleniumGrid.revisionHistoryLimit | int | `10` | Specify how many old ReplicaSets for this Deployment you want to retain. The rest will be garbage-collected in the background. |
 | global.seleniumGrid.structuredLogs | bool | `false` | Whether to enable structured logging |
 | global.seleniumGrid.httpLogs | bool | `false` | Enable http logging. Tracing should be enabled to log http logs. |
-| global.seleniumGrid.updateStrategy.type | string | `"Recreate"` | Specify update strategy for all components, can be overridden individually |
+| global.seleniumGrid.updateStrategy.type | string | `"RollingUpdate"` | Specify update strategy for all components, can be overridden individually |
 | global.seleniumGrid.updateStrategy.rollingUpdate | object | `{"maxSurge":1,"maxUnavailable":0}` | Specify for strategy RollingUpdate |
 | global.seleniumGrid.affinity | object | `{}` | Specify affinity for all components, can be overridden individually |
 | global.seleniumGrid.topologySpreadConstraints | list | `[]` | Specify topologySpreadConstraints for all components, can be overridden individually |
@@ -79,7 +79,7 @@ A Helm chart for creating a Selenium Grid Server in Kubernetes
 | serviceAccount.create | bool | `true` | Create a service account for all components. If using an external service account, set to false and provide its name in `nameOverride` below |
 | serviceAccount.nameOverride | string | `nil` | Override to use an external service account |
 | serviceAccount.annotations | object | `{}` | Annotations for the service account |
-| rbacRole | object | `{"annotations":{},"create":true,"nameOverride":null,"rules":[{"apiGroups":["keda.sh"],"resources":["scaledjobs"],"verbs":["get","list","patch","update","delete"]},{"apiGroups":["keda.sh"],"resources":["scaledobjects"],"verbs":["get","list","patch","update","delete"]},{"apiGroups":["autoscaling"],"resources":["horizontalpodautoscalers"],"verbs":["get","list","patch","update","delete"]}]}` | RBAC settings for patching finalizers KEDA scaled resources |
+| rbacRole | object | `{"annotations":{},"create":true,"nameOverride":null,"rules":[{"apiGroups":["keda.sh"],"resources":["scaledjobs"],"verbs":["get","list","patch","update","delete"]},{"apiGroups":["keda.sh"],"resources":["scaledobjects"],"verbs":["get","list","patch","update","delete"]},{"apiGroups":["keda.sh"],"resources":["triggerauthentication"],"verbs":["get","list","patch","update","delete"]},{"apiGroups":["autoscaling"],"resources":["horizontalpodautoscalers"],"verbs":["get","list","patch","update","delete"]}]}` | RBAC settings for patching finalizers KEDA scaled resources |
 | rbacRole.create | bool | `true` | Enable to create RBAC role to access few KEDA resources. If using an external role, set to false and provide its name in `nameOverride` below |
 | rbacRole.nameOverride | string | `nil` | Override resource name or provide an external role name |
 | rbacRoleBinding | object | `{"annotations":{},"create":true,"nameOverride":null,"roleRef":{"apiGroup":"rbac.authorization.k8s.io","kind":"Role"},"subjects":[{"kind":"ServiceAccount"}]}` | RBAC role binding settings for patching finalizers KEDA scaled resources |
@@ -307,6 +307,22 @@ A Helm chart for creating a Selenium Grid Server in Kubernetes
 | tracing.ingress.paths | list | `[{"backend":{"service":{"name":"{{ .Release.Name }}-jaeger-query","port":{"number":16686}}},"path":"/jaeger","pathType":"Prefix"}]` | Configure paths for Jaeger ingress resource |
 | monitoring.enabled | bool | `false` |  |
 | monitoring.enabledWithExistingAgent | bool | `false` |  |
+| monitoring.exporter.nameOverride | string | `""` |  |
+| monitoring.exporter.imageRegistry | string | `"ricardbejarano"` |  |
+| monitoring.exporter.imageName | string | `"graphql_exporter"` |  |
+| monitoring.exporter.imageTag | string | `"latest"` |  |
+| monitoring.exporter.imagePullSecret | string | `""` | Custom pull secret for container in patch job |
+| monitoring.exporter.annotations | object | `{}` |  |
+| monitoring.exporter.port | int | `9199` |  |
+| monitoring.exporter.service.enabled | bool | `true` | Create a service for exporter |
+| monitoring.exporter.service.type | string | `"ClusterIP"` | Service type |
+| monitoring.exporter.service.loadBalancerIP | string | `""` | Set specific loadBalancerIP when serviceType is LoadBalancer (see https://kubernetes.io/docs/concepts/services-networking/service/#loadbalancer) |
+| monitoring.exporter.service.nodePort | int | `30199` | Node port for service |
+| monitoring.exporter.service.annotations | object | `{}` | Annotations for exporter service |
+| monitoring.exporter.replicas | int | `1` |  |
+| monitoring.additionalScrapeConfigs.key | string | `""` |  |
+| monitoring.additionalScrapeConfigs.value | string | `""` |  |
+| monitoring.annotations | object | `{}` |  |
 | autoscaling.enabled | bool | `false` | Enable autoscaling. Implies installing KEDA |
 | autoscaling.enableWithExistingKEDA | bool | `false` | Enable autoscaling without automatically installing KEDA |
 | autoscaling.scalingType | string | `"job"` | Which type of KEDA scaling to use: job or deployment |
@@ -318,12 +334,12 @@ A Helm chart for creating a Selenium Grid Server in Kubernetes
 | autoscaling.patchObjectFinalizers.annotations | object | `{"helm.sh/hook":"post-install,post-upgrade,post-rollback,pre-delete","helm.sh/hook-delete-policy":"hook-succeeded,before-hook-creation","helm.sh/hook-weight":"-1"}` | Annotations for patch job |
 | autoscaling.patchObjectFinalizers.serviceAccount | string | `""` | Define an external service account name contains permissions to patch KEDA scaled resources |
 | autoscaling.patchObjectFinalizers.imagePullSecret | string | `""` | Custom pull secret for container in patch job |
-| autoscaling.patchObjectFinalizers.resources | object | `{"limits":{"cpu":"50m","memory":"50Mi"},"requests":{"cpu":"10m","memory":"10Mi"}}` | Define resources for container in patch job |
+| autoscaling.patchObjectFinalizers.resources | object | `{"limits":{"cpu":"200m","memory":"500Mi"},"requests":{"cpu":"100m","memory":"200Mi"}}` | Define resources for container in patch job |
 | autoscaling.scaledOptions | object | `{"maxReplicaCount":8,"minReplicaCount":0,"pollingInterval":10}` | Options for KEDA scaled resources (keep only common options used for both ScaledJob and ScaledObject) |
 | autoscaling.scaledOptions.minReplicaCount | int | `0` | Minimum number of replicas |
 | autoscaling.scaledOptions.maxReplicaCount | int | `8` | Maximum number of replicas |
 | autoscaling.scaledOptions.pollingInterval | int | `10` | Polling interval in seconds |
-| autoscaling.scaledJobOptions.scalingStrategy.strategy | string | `"default"` | Scaling strategy for KEDA ScaledJob |
+| autoscaling.scaledJobOptions.scalingStrategy.strategy | string | `"accurate"` | Scaling strategy for KEDA ScaledJob |
 | autoscaling.scaledJobOptions.successfulJobsHistoryLimit | int | `0` | Number of Completed jobs should be kept |
 | autoscaling.scaledJobOptions.failedJobsHistoryLimit | int | `0` | Number of Failed jobs should be kept (for troubleshooting purposes) |
 | autoscaling.scaledJobOptions.jobTargetRef | object | `{"backoffLimit":0,"completions":1,"parallelism":1}` | Specify job target ref for KEDA ScaledJob |
@@ -355,7 +371,7 @@ A Helm chart for creating a Selenium Grid Server in Kubernetes
 | chromeNode.hostAliases | string | `nil` | Custom host aliases for chrome nodes |
 | chromeNode.extraEnvironmentVariables | string | `nil` | Custom environment variables for chrome nodes |
 | chromeNode.extraEnvFrom | string | `nil` | Custom environment variables by sourcing entire configMap, Secret, etc. for chrome nodes |
-| chromeNode.service.enabled | bool | `true` | Create a service for node |
+| chromeNode.service.enabled | bool | `false` | Create a service for node |
 | chromeNode.service.type | string | `"ClusterIP"` | Service type |
 | chromeNode.service.loadBalancerIP | string | `""` | Set specific loadBalancerIP when serviceType is LoadBalancer (see https://kubernetes.io/docs/concepts/services-networking/service/#loadbalancer) |
 | chromeNode.service.ports | string | `nil` | Extra ports exposed in node service |
@@ -380,6 +396,7 @@ A Helm chart for creating a Selenium Grid Server in Kubernetes
 | chromeNode.hpa.unsafeSsl | string | `"{{ template \"seleniumGrid.graphqlURL.unsafeSsl\" . }}"` | Skip check SSL when connecting to the Graphql endpoint |
 | chromeNode.initContainers | list | `[]` | It is used to add initContainers in the same pod of the browser node. It should be set using the --set-json option |
 | chromeNode.sidecars | list | `[]` | It is used to add sidecars proxy in the same pod of the browser node. It means it will add a new container to the deployment itself. It should be set using the --set-json option |
+| chromeNode.videoRecorder | object | `{}` | Override specific video recording settings for chrome node |
 | firefoxNode.enabled | bool | `true` | Enable firefox nodes |
 | firefoxNode.deploymentEnabled | bool | `true` | NOTE: Only used when autoscaling.enabled is false Enable creation of Deployment true (default) - if you want long living pods false - for provisioning your own custom type such as Jobs |
 | firefoxNode.updateStrategy | object | `{"type":"RollingUpdate"}` | Global update strategy will be overwritten by individual component |
@@ -405,7 +422,7 @@ A Helm chart for creating a Selenium Grid Server in Kubernetes
 | firefoxNode.hostAliases | string | `nil` | Custom host aliases for firefox nodes |
 | firefoxNode.extraEnvironmentVariables | string | `nil` | Custom environment variables for firefox nodes |
 | firefoxNode.extraEnvFrom | string | `nil` | Custom environment variables by sourcing entire configMap, Secret, etc. for firefox nodes |
-| firefoxNode.service.enabled | bool | `true` | Create a service for node |
+| firefoxNode.service.enabled | bool | `false` | Create a service for node |
 | firefoxNode.service.type | string | `"ClusterIP"` | Service type |
 | firefoxNode.service.loadBalancerIP | string | `""` | Set specific loadBalancerIP when serviceType is LoadBalancer (see https://kubernetes.io/docs/concepts/services-networking/service/#loadbalancer) |
 | firefoxNode.service.ports | string | `nil` | Extra ports exposed in node service |
@@ -430,6 +447,7 @@ A Helm chart for creating a Selenium Grid Server in Kubernetes
 | firefoxNode.hpa.unsafeSsl | string | `"{{ template \"seleniumGrid.graphqlURL.unsafeSsl\" . }}"` | Skip check SSL when connecting to the Graphql endpoint |
 | firefoxNode.initContainers | list | `[]` | It is used to add initContainers in the same pod of the browser node. It should be set using the --set-json option |
 | firefoxNode.sidecars | list | `[]` | It is used to add sidecars proxy in the same pod of the browser node. It means it will add a new container to the deployment itself. It should be set using the --set-json option |
+| firefoxNode.videoRecorder | object | `{}` | Override specific video recording settings for firefox node |
 | edgeNode.enabled | bool | `true` | Enable edge nodes |
 | edgeNode.deploymentEnabled | bool | `true` | NOTE: Only used when autoscaling.enabled is false Enable creation of Deployment true (default) - if you want long living pods false - for provisioning your own custom type such as Jobs |
 | edgeNode.updateStrategy | object | `{"type":"RollingUpdate"}` | Global update strategy will be overwritten by individual component |
@@ -455,7 +473,7 @@ A Helm chart for creating a Selenium Grid Server in Kubernetes
 | edgeNode.hostAliases | string | `nil` | Custom host aliases for edge nodes |
 | edgeNode.extraEnvironmentVariables | string | `nil` | Custom environment variables for edge nodes |
 | edgeNode.extraEnvFrom | string | `nil` | Custom environment variables by sourcing entire configMap, Secret, etc. for edge nodes |
-| edgeNode.service.enabled | bool | `true` | Create a service for node |
+| edgeNode.service.enabled | bool | `false` | Create a service for node |
 | edgeNode.service.type | string | `"ClusterIP"` | Service type |
 | edgeNode.service.loadBalancerIP | string | `""` | Set specific loadBalancerIP when serviceType is LoadBalancer (see https://kubernetes.io/docs/concepts/services-networking/service/#loadbalancer) |
 | edgeNode.service.ports | string | `nil` | Extra ports exposed in node service |
@@ -480,6 +498,58 @@ A Helm chart for creating a Selenium Grid Server in Kubernetes
 | edgeNode.hpa.unsafeSsl | string | `"{{ template \"seleniumGrid.graphqlURL.unsafeSsl\" . }}"` | Skip check SSL when connecting to the Graphql endpoint |
 | edgeNode.initContainers | list | `[]` | It is used to add initContainers in the same pod of the browser node. It should be set using the --set-json option |
 | edgeNode.sidecars | list | `[]` | It is used to add sidecars proxy in the same pod of the browser node. It means it will add a new container to the deployment itself. It should be set using the --set-json option |
+| edgeNode.videoRecorder | object | `{}` | Override specific video recording settings for edge node |
+| relayNode.enabled | bool | `false` | Enable relay nodes |
+| relayNode.deploymentEnabled | bool | `true` | NOTE: Only used when autoscaling.enabled is false Enable creation of Deployment true (default) - if you want long-living pods false - for provisioning your own custom type such as Jobs |
+| relayNode.updateStrategy | object | `{"type":"RollingUpdate"}` | Global update strategy will be overwritten by individual component |
+| relayNode.replicas | int | `1` | Number of relay nodes |
+| relayNode.imageRegistry | string | `nil` | Registry to pull the image (this overwrites global.seleniumGrid.imageRegistry parameter) |
+| relayNode.imageName | string | `"node-base"` | Image of relay nodes |
+| relayNode.imageTag | string | `nil` | Image of relay nodes (this overwrites global.seleniumGrid.nodesImageTag) |
+| relayNode.imagePullPolicy | string | `"IfNotPresent"` | Image pull policy (see https://kubernetes.io/docs/concepts/containers/images/#updating-images) |
+| relayNode.imagePullSecret | string | `""` | Image pull secret (see https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/) |
+| relayNode.ports | list | `[]` | Extra ports list to enable on the node container (e.g. SSH, VNC, NoVNC, etc.) |
+| relayNode.port | int | `5555` | Node component port |
+| relayNode.nodePort | string | `nil` | Node component expose NodePort |
+| relayNode.affinity | object | `{}` | Specify affinity for relay-node pods, this overwrites global.seleniumGrid.affinity parameter |
+| relayNode.topologySpreadConstraints | list | `[]` | Specify topologySpreadConstraints for relay-node pods, this overwrites global.seleniumGrid.topologySpreadConstraints parameter |
+| relayNode.annotations | object | `{}` | Annotations for relay-node pods |
+| relayNode.labels | object | `{}` | Labels for relay-node pods |
+| relayNode.shareProcessNamespace | bool | `true` | Shared process namespace for relay-node pods |
+| relayNode.resources.requests | object | `{"cpu":"1","memory":"1Gi"}` | Request resources for relay-node pods |
+| relayNode.resources.limits | object | `{"cpu":"1","memory":"2Gi"}` | Limit resources for relay-node pods |
+| relayNode.securityContext | object | `{}` | SecurityContext for relay-node container |
+| relayNode.tolerations | list | `[]` | Tolerations for relay-node pods |
+| relayNode.nodeSelector | object | `{}` | Node selector for relay-node pods |
+| relayNode.hostAliases | string | `nil` | Custom host aliases for relay nodes |
+| relayNode.extraEnvironmentVariables | string | `nil` | Custom environment variables for relay nodes |
+| relayNode.extraEnvFrom | string | `nil` | Custom environment variables by sourcing entire configMap, Secret, etc. for relay nodes |
+| relayNode.service.enabled | bool | `false` | Create a service for node |
+| relayNode.service.type | string | `"ClusterIP"` | Service type |
+| relayNode.service.loadBalancerIP | string | `""` | Set specific loadBalancerIP when serviceType is LoadBalancer (see https://kubernetes.io/docs/concepts/services-networking/service/#loadbalancer) |
+| relayNode.service.ports | string | `nil` | Extra ports exposed in node service |
+| relayNode.service.annotations | object | `{}` | Custom annotations for service |
+| relayNode.dshmVolumeSizeLimit | string | `""` | Size limit for DSH volume mounted in container (if not set, default is disabled, e.g "1Gi") |
+| relayNode.priorityClassName | string | `""` | Priority class name for relay-node pods |
+| relayNode.startupProbe | object | `{"enabled":true,"failureThreshold":12,"initialDelaySeconds":0,"path":"/status","periodSeconds":5,"successThreshold":1,"timeoutSeconds":60}` | Startup probe settings |
+| relayNode.readinessProbe | object | `{"enabled":false,"failureThreshold":10,"initialDelaySeconds":10,"path":"/status","periodSeconds":10,"successThreshold":1,"timeoutSeconds":10}` | Readiness probe settings |
+| relayNode.livenessProbe | object | `{"enabled":false,"failureThreshold":6,"initialDelaySeconds":30,"path":"/status","periodSeconds":10,"successThreshold":1,"timeoutSeconds":60}` | Liveness probe settings |
+| relayNode.terminationGracePeriodSeconds | int | `30` | Time to wait for pod termination |
+| relayNode.deregisterLifecycle | string | `nil` | Define preStop command to shut down the relay node gracefully. This overwrites autoscaling.deregisterLifecycle |
+| relayNode.lifecycle | object | `{}` | Define postStart and preStop events. This overwrites the defined preStop in deregisterLifecycle if any |
+| relayNode.extraVolumeMounts | list | `[]` | Extra volume mounts for relay-node container |
+| relayNode.extraVolumes | list | `[]` | Extra volumes for relay-node pod |
+| relayNode.nodeMaxSessions | string | `nil` | Override the number of max sessions per node |
+| relayNode.scaledOptions | string | `nil` | Override the scaled options for relay nodes |
+| relayNode.scaledJobOptions | string | `nil` | Override the scaledJobOptions for relay nodes |
+| relayNode.scaledObjectOptions | string | `nil` | Override the scaledObjectOptions for relay nodes |
+| relayNode.hpa.browserName | string | `"chrome"` | browserName from the capability |
+| relayNode.hpa.sessionBrowserName | string | `""` | sessionBrowserName if the browserName is different from the sessionBrowserName |
+| relayNode.hpa.platformName | string | `"Android"` | platformName from the capability |
+| relayNode.hpa.unsafeSsl | string | `"{{ template \"seleniumGrid.graphqlURL.unsafeSsl\" . }}"` | Skip check SSL when connecting to the Graphql endpoint |
+| relayNode.initContainers | list | `[]` | It is used to add initContainers in the same pod of the browser node. It should be set using the --set-json option |
+| relayNode.sidecars | list | `[]` | It is used to add sidecars proxy in the same pod of the browser node. It means it will add a new container to the deployment itself. It should be set using the --set-json option |
+| relayNode.videoRecorder | object | `{}` | Override specific video recording settings for edge node |
 | videoRecorder.enabled | bool | `false` | Enable video recording in all browser nodes |
 | videoRecorder.name | string | `"video"` | Container name is set to resource specs |
 | videoRecorder.imageRegistry | string | `nil` | Registry to pull the image (this overwrites global.seleniumGrid.imageRegistry parameter) |
@@ -507,11 +577,11 @@ A Helm chart for creating a Selenium Grid Server in Kubernetes
 | videoRecorder.extraVolumes | list | `[]` | Extra volumes for video recorder pod |
 | videoRecorder.s3 | object | `{"args":[],"command":[],"extraEnvironmentVariables":null,"imageName":"aws-cli","imagePullPolicy":"IfNotPresent","imageRegistry":"bitnami","imageTag":"latest","securityContext":{"runAsUser":0}}` | Container spec for the uploader if above it is defined as "uploader.name: s3" |
 | customLabels | object | `{}` | Custom labels for k8s resources |
-| keda.image | object | `{"keda":{"registry":"selenium","repository":"keda","tag":"2.15.1-selenium-grid-20240922"},"metricsApiServer":{"registry":"selenium","repository":"keda-metrics-apiserver","tag":"2.15.1-selenium-grid-20240922"},"webhooks":{"registry":"selenium","repository":"keda-admission-webhooks","tag":"2.15.1-selenium-grid-20240922"}}` | Specify image for KEDA components |
+| keda.image | object | `{"keda":{"registry":"selenium","repository":"keda","tag":"2.15.1-selenium-grid-20241101"},"metricsApiServer":{"registry":"selenium","repository":"keda-metrics-apiserver","tag":"2.15.1-selenium-grid-20241101"},"webhooks":{"registry":"selenium","repository":"keda-admission-webhooks","tag":"2.15.1-selenium-grid-20241101"}}` | Specify image for KEDA components |
 | keda.additionalAnnotations | string | `nil` | Annotations for KEDA resources |
 | keda.http.timeout | int | `60000` |  |
 | keda.webhooks | object | `{"enabled":false}` | Enable KEDA admission webhooks component |
 | ingress-nginx | object | `{"controller":{"admissionWebhooks":{"enabled":false}}}` | Configuration for dependency chart ingress-nginx |
-| kube-prometheus-stack | object | `{"cleanPrometheusOperatorObjectNames":true}` | Configuration for dependency chart kube-prometheus-stack |
+| kube-prometheus-stack | object | `{"cleanPrometheusOperatorObjectNames":true,"prometheus":{"prometheusSpec":{"additionalConfig":{"additionalScrapeConfigs":{"key":"{{ template \"seleniumGrid.monitoring.scrape.key\" $ }}","name":"{{ template \"seleniumGrid.monitoring.exporter.fullname\" $ }}"}}}}}` | Configuration for dependency chart kube-prometheus-stack |
 | jaeger | object | `{"agent":{"enabled":false},"allInOne":{"enabled":true,"extraEnv":[{"name":"QUERY_BASE_PATH","value":"/jaeger"}]},"collector":{"enabled":false},"provisionDataStore":{"cassandra":false},"query":{"enabled":false},"storage":{"type":"badger"}}` | Configuration for dependency chart jaeger |
 
