@@ -1,3 +1,21 @@
+## :heavy_check_mark: selenium-grid-0.37.1
+
+- Chart is using image tag 4.26.0-20241101
+- Chart is tested on Kubernetes versions: v1.25.16, v1.26.15, v1.27.16, v1.28.15, v1.29.10, v1.30.6, v1.31.2, 
+- Chart is tested on container runtime Docker versions: 24.0.9, 24.0.9, 24.0.9, 24.0.9, 25.0.5, 26.1.4, 27.2.0, 
+- Chart is tested on Helm versions: v3.11.3, v3.11.3, v3.12.3, v3.13.3, v3.14.3, v3.15.4, v3.16.1, 
+
+### Changed
+- [`fc81fd05`](http://github.com/seleniumhq/docker-selenium/commit/fc81fd05ac7f5b51b91e089d4e189c5b2ea5e720) - Release chart 0.37.1 :: Viet Nguyen Duc
+- [`82350ba8`](http://github.com/seleniumhq/docker-selenium/commit/82350ba80a959464c74ecf6582bea2ac97eca913) - Update chart configuration table :: Selenium CI Bot
+- [`edfe8a30`](http://github.com/seleniumhq/docker-selenium/commit/edfe8a3020db5beeb1d7f11a0b45194aae3fe6d3) - chore(deps): update helm release kube-prometheus-stack to v65.8.1 (#2428) :: renovate[bot]
+- [`a1887055`](http://github.com/seleniumhq/docker-selenium/commit/a1887055c59b200b8ffd5f46a02809fc6be9dc25) - chore(deps): update helm release jaeger to v3.3.2 (#2455) :: renovate[bot]
+- [`e0a7d63b`](http://github.com/seleniumhq/docker-selenium/commit/e0a7d63b75c7540a9447a8008feb164e715fcb3e) - chore(deps): update helm release keda to v2.16.0 (#2459) :: renovate[bot]
+- [`06663919`](http://github.com/seleniumhq/docker-selenium/commit/06663919defd859345c7b5d942106405453d30cf) - Update chart 0.37.0 changelog [skip ci] :: Selenium CI Bot
+
+### Experimental
+- Selenium Grid Scaler implementation preview. [README](https://github.com/seleniumhq/docker-selenium/tree/trunk/.keda/README.md)
+
 ## :heavy_check_mark: selenium-grid-0.37.0
 
 - Chart is using image tag 4.26.0-20241101
