@@ -59,6 +59,7 @@ TEST_PATCHED_KEDA=${TEST_PATCHED_KEDA:-"false"}
 BASIC_AUTH_EMBEDDED_URL=${BASIC_AUTH_EMBEDDED_URL:-"false"}
 SELENIUM_GRID_MONITORING=${SELENIUM_GRID_MONITORING:-"true"}
 TEST_EXISTING_PTS=${TEST_EXISTING_PTS:-"false"}
+LOCAL_HOSTNAME=$(hostname -I | awk '{for(i=1;i<=NF;i++) if ($i ~ /^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$/) {print $i; exit}}')
 
 cleanup() {
   # Get the list of pods
@@ -191,16 +192,16 @@ fi
 
 if [ "${CHART_ENABLE_INGRESS_HOSTNAME}" = "true" ]; then
   if [[ ! $(cat /etc/hosts) == *"${HOSTNAME_ADDRESS}"* ]]; then
-    sudo -- sh -c -e "echo \"$(hostname -i) ${HOSTNAME_ADDRESS}\" >> /etc/hosts"
+    sudo -- sh -c -e "echo \"${LOCAL_HOSTNAME} ${HOSTNAME_ADDRESS}\" >> /etc/hosts"
   fi
   if [[ ! $(cat /etc/hosts) == *"alertmanager.${HOSTNAME_ADDRESS}"* ]]; then
-    sudo -- sh -c -e "echo \"$(hostname -i) alertmanager.${HOSTNAME_ADDRESS}\" >> /etc/hosts"
+    sudo -- sh -c -e "echo \"${LOCAL_HOSTNAME} alertmanager.${HOSTNAME_ADDRESS}\" >> /etc/hosts"
   fi
   if [[ ! $(cat /etc/hosts) == *"grafana.${HOSTNAME_ADDRESS}"* ]]; then
-    sudo -- sh -c -e "echo \"$(hostname -i) grafana.${HOSTNAME_ADDRESS}\" >> /etc/hosts"
+    sudo -- sh -c -e "echo \"${LOCAL_HOSTNAME} grafana.${HOSTNAME_ADDRESS}\" >> /etc/hosts"
   fi
   if [[ ! $(cat /etc/hosts) == *"pts.${HOSTNAME_ADDRESS}"* ]]; then
-    sudo -- sh -c -e "echo \"$(hostname -i) pts.${HOSTNAME_ADDRESS}\" >> /etc/hosts"
+    sudo -- sh -c -e "echo \"${LOCAL_HOSTNAME} pts.${HOSTNAME_ADDRESS}\" >> /etc/hosts"
   fi
   ping -c 2 ${HOSTNAME_ADDRESS}
   HELM_COMMAND_SET_IMAGES="${HELM_COMMAND_SET_IMAGES} \
@@ -250,7 +251,7 @@ if [ "${SECURE_INGRESS_ONLY_GENERATE}" = "true" ] && [ "${RENDER_HELM_TEMPLATE_O
   --set tls.ingress.generateTLS=true \
   --set tls.ingress.defaultCN=${SELENIUM_GRID_HOST} \
   --set tls.ingress.defaultSANList[0]=${SELENIUM_GRID_HOST} \
-  --set tls.ingress.defaultIPList[0]=$(hostname -I | awk '{print $1}') \
+  --set tls.ingress.defaultIPList[0]=${LOCAL_HOSTNAME} \
   "
 fi
 
