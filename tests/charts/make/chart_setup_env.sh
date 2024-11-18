@@ -83,11 +83,15 @@ elif [ "${CLUSTER}" = "minikube" ]; then
     rm -rf minikube-linux-$(dpkg --print-architecture)
     echo "==============================="
     echo "Installing Go"
-    GO_VERSION="1.23.2"
+    GO_VERSION="1.23.3"
     curl -sLO https://go.dev/dl/go$GO_VERSION.linux-$(dpkg --print-architecture).tar.gz
-    sudo tar -xf go$GO_VERSION.linux-$(dpkg --print-architecture).tar.gz -C /usr/local
+    tar -xvf go$GO_VERSION.linux-$(dpkg --print-architecture).tar.gz -C /tmp
     rm -rf go$GO_VERSION.linux-$(dpkg --print-architecture).tar.gz*
-    sudo ln -sf /usr/local/go/bin/go /usr/bin/go
+    sudo mv /tmp/go /usr/local
+    export GOROOT=/usr/local/go
+    export GOPATH=$HOME/go
+    export PATH=$GOPATH/bin:$GOROOT/bin:$PATH
+    source $HOME/.profile || source $HOME/.bashrc
     go version
     echo "==============================="
     echo "Installing CRI-CTL (CLI for CRI-compatible container runtimes)"

@@ -17,6 +17,7 @@ BUILD_ARGS := $(BUILD_ARGS) --progress plain
 MAJOR := $(word 1,$(subst ., ,$(TAG_VERSION)))
 MINOR := $(word 2,$(subst ., ,$(TAG_VERSION)))
 MAJOR_MINOR_PATCH := $(word 1,$(subst -, ,$(TAG_VERSION)))
+FFMPEG_VERSION := $(or $(FFMPEG_VERSION),$(FFMPEG_VERSION),7.1)
 FFMPEG_TAG_PREV_VERSION := $(or $(FFMPEG_TAG_PREV_VERSION),$(FFMPEG_TAG_PREV_VERSION),ffmpeg-7.1)
 FFMPEG_TAG_VERSION := $(or $(FFMPEG_TAG_VERSION),$(FFMPEG_TAG_VERSION),ffmpeg-7.1)
 FFMPEG_BASED_NAME := $(or $(FFMPEG_BASED_NAME),$(FFMPEG_BASED_NAME),linuxserver)
@@ -243,8 +244,8 @@ standalone_edge_dev: edge_dev
 standalone_edge_beta: edge_beta
 	cd ./Standalone && docker buildx build --platform $(PLATFORMS) $(BUILD_ARGS) --build-arg NAMESPACE=$(NAME) --build-arg VERSION=beta --build-arg BASE=node-edge -t $(NAME)/standalone-edge:beta .
 
-video:
-	cd ./Video && SEL_PASSWD=$(SEL_PASSWD) docker buildx build --platform $(PLATFORMS) $(BUILD_ARGS) --build-arg NAMESPACE=$(FFMPEG_BASED_NAME) --build-arg BASED_TAG=$(FFMPEG_BASED_TAG) --secret id=SEL_PASSWD --sbom=true --attest type=provenance,mode=max -t $(NAME)/video:$(FFMPEG_TAG_VERSION)-$(BUILD_DATE) .
+video: base
+	cd ./Video && docker buildx build --platform $(PLATFORMS) $(BUILD_ARGS) --build-arg VERSION_FFMPEG=$(FFMPEG_VERSION) $(FROM_IMAGE_ARGS) -t $(NAME)/video:$(FFMPEG_TAG_VERSION)-$(BUILD_DATE) .
 
 fetch_grid_scaler_resources:
 	mkdir -p ./.keda/scalers \
@@ -932,7 +933,7 @@ chart_test_autoscaling_deployment:
 	./tests/charts/make/chart_test.sh DeploymentAutoscaling
 
 chart_test_autoscaling_job_https:
-	PLATFORMS=$(PLATFORMS) TEST_EXISTING_KEDA=true RELEASE_NAME=selenium CHART_ENABLE_BASIC_AUTH=true SELENIUM_GRID_MONITORING=false SCALING_STRATEGY=accurate \
+	PLATFORMS=$(PLATFORMS) TEST_EXISTING_KEDA=true RELEASE_NAME=selenium CHART_ENABLE_BASIC_AUTH=true SELENIUM_GRID_MONITORING=false \
 	SECURE_CONNECTION_SERVER=true SELENIUM_GRID_PROTOCOL=https SELENIUM_GRID_PORT=443 SUB_PATH=/ \
 	MAX_SESSIONS_FIREFOX=1 MAX_SESSIONS_EDGE=2 MAX_SESSIONS_CHROME=3 TEST_NAME_OVERRIDE=true \
 	VERSION=$(TAG_VERSION) VIDEO_TAG=$(FFMPEG_TAG_VERSION)-$(BUILD_DATE) KEDA_BASED_NAME=$(KEDA_BASED_NAME) KEDA_BASED_TAG=$(KEDA_BASED_TAG) NAMESPACE=$(NAMESPACE) BINDING_VERSION=$(BINDING_VERSION) BASE_VERSION=$(BASE_VERSION) EXTERNAL_UPLOADER_CONFIG=true \
@@ -954,7 +955,7 @@ chart_test_autoscaling_job:
 	./tests/charts/make/chart_test.sh JobAutoscaling
 
 chart_test_autoscaling_playwright_connect_grid:
-	PLATFORMS=$(PLATFORMS) CHART_ENABLE_TRACING=true CHART_ENABLE_BASIC_AUTH=true MATRIX_TESTS=CDPTests SCALING_STRATEGY=accurate \
+	PLATFORMS=$(PLATFORMS) CHART_ENABLE_TRACING=true CHART_ENABLE_BASIC_AUTH=true MATRIX_TESTS=CDPTests \
 	BASIC_AUTH_USERNAME=docker-selenium BASIC_AUTH_PASSWORD=2NMI4jdBi6k7bENoeUfV25295VvzwAE9chM24a+2VL95uOHozo \
 	SECURE_INGRESS_ONLY_DEFAULT=true SECURE_USE_EXTERNAL_CERT=true SELENIUM_GRID_PROTOCOL=https SELENIUM_GRID_HOST=$$(hostname -i) SELENIUM_GRID_PORT=443 \
 	VERSION=$(TAG_VERSION) VIDEO_TAG=$(FFMPEG_TAG_VERSION)-$(BUILD_DATE) KEDA_BASED_NAME=$(KEDA_BASED_NAME) KEDA_BASED_TAG=$(KEDA_BASED_TAG) NAMESPACE=$(NAMESPACE) BINDING_VERSION=$(BINDING_VERSION) BASE_VERSION=$(BASE_VERSION) \

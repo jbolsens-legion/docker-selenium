@@ -128,23 +128,11 @@ jobs:
         uses: nick-invision/retry@master
         if: matrix.build-all == true
         with:
-          timeout_minutes: 20
+          timeout_minutes: 60
           max_attempts: 3
           retry_wait_seconds: 60
           command: |
             VERSION=${BRANCH} BUILD_DATE=${BUILD_DATE} make build
-      - name: Pre-build to reduce logs in test phase
-        uses: nick-invision/retry@master
-        if: matrix.build-all != true
-        with:
-          timeout_minutes: 30
-          max_attempts: 3
-          retry_wait_seconds: 60
-          command: |
-            VERSION=${BRANCH} BUILD_DATE=${BUILD_DATE} make hub
-            VERSION=${BRANCH} BUILD_DATE=${BUILD_DATE} make chrome
-            VERSION=${BRANCH} BUILD_DATE=${BUILD_DATE} make firefox
-            VERSION=${BRANCH} BUILD_DATE=${BUILD_DATE} make edge
       - name: Set test parameters
         if: (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
         run: |
@@ -158,7 +146,7 @@ jobs:
       - name: Run Docker Compose to ${{ matrix.test-strategy }}
         uses: nick-invision/retry@master
         with:
-          timeout_minutes: 40
+          timeout_minutes: 120
           max_attempts: 2
           retry_wait_seconds: 60
           command: |

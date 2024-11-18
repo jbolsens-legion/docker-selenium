@@ -1,6 +1,7 @@
 ARG NAMESPACE=selenium
 ARG VERSION=latest
-FROM ${NAMESPACE}/base:${VERSION}
+ARG BASE=base
+FROM ${NAMESPACE}/${BASE}:${VERSION}
 ARG AUTHORS
 LABEL authors=${AUTHORS}
 
@@ -66,8 +67,7 @@ ENV LANG_WHICH=${LANG_WHICH} \
     # Following line fixes https://github.com/SeleniumHQ/docker-selenium/issues/87
     DBUS_SESSION_BUS_ADDRESS=/dev/null
 
-RUN --mount=type=secret,id=SEL_PASSWD \
-  apt-get update -qqy \
+RUN apt-get update -qqy \
   && apt-get -qqy --no-install-recommends install \
 #==============
 # Xvfb
@@ -104,11 +104,12 @@ RUN --mount=type=secret,id=SEL_PASSWD \
   && apt-get -qyy autoremove \
   && rm -rf /var/lib/apt/lists/* \
   && apt-get -qyy clean \
-  && pip install --no-cache-dir --upgrade --break-system-packages setuptools \
+  && pip install --no-cache-dir --upgrade --break-system-packages setuptools
 ########################################
 # noVNC exposes VNC through a web page #
 ########################################
-  && wget -nv -O noVNC.zip \
+RUN --mount=type=secret,id=SEL_PASSWD \
+  wget -nv -O noVNC.zip \
        "https://github.com/novnc/noVNC/archive/refs/${NOVNC_SOURCE}/${NOVNC_VERSION}.zip" \
   && unzip -x noVNC.zip \
   && mv noVNC-${NOVNC_VERSION} /opt/bin/noVNC \
