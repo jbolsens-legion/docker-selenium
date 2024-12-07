@@ -1,3 +1,43 @@
+## :heavy_check_mark: selenium-grid-0.38.1
+
+- Chart is using image tag 4.27.0-20241204
+- Chart is tested on Kubernetes versions: v1.25.16, v1.26.15, v1.27.16, v1.28.15, v1.29.10, v1.30.6, v1.31.2, 
+- Chart is tested on container runtime Docker versions: 24.0.9, 24.0.9, 24.0.9, 24.0.9, 25.0.5, 26.1.4, 27.3.1, 
+- Chart is tested on Helm versions: v3.11.3, v3.11.3, v3.12.3, v3.13.3, v3.14.3, v3.15.4, v3.16.3, 
+
+### Changed
+- [`739d7e8c`](http://github.com/seleniumhq/docker-selenium/commit/739d7e8c5305987a814cd670589e68c7dce7329e) - Update tag 4.27.0-20241204 in docs and files :: Selenium CI Bot
+- [`26c177da`](http://github.com/seleniumhq/docker-selenium/commit/26c177dadd7800fae835c921d4d1653b4a60b27f) - chore(deps): update Helm release postgresql to v16.2.4 (#2493) :: renovate[bot]
+- [`49c4a2fd`](http://github.com/seleniumhq/docker-selenium/commit/49c4a2fd7e800d809fe3821b86220dc5793c0b7e) - K8s: Add configs for sessions external datastore (#2491) :: Viet Nguyen Duc
+- [`7e6b9b30`](http://github.com/seleniumhq/docker-selenium/commit/7e6b9b3033646156299935cae3bb4b56f1da7270) - K8s: Add test results for Grid autoscaling with KEDA (#2490) :: Viet Nguyen Duc
+- [`cf0c839a`](http://github.com/seleniumhq/docker-selenium/commit/cf0c839ab05a6ae958ef2ef813c6d9aaddbf65d7) - K8s: regression issue on template for nodes service.enabled (#2484) :: Viet Nguyen Duc
+- [`a4c352d7`](http://github.com/seleniumhq/docker-selenium/commit/a4c352d7e024c521946ac887bd3e305add91a59b) - chore(deps): Update Helm release kube-prometheus-stack to v66.3.0 (#2480) :: renovate[bot]
+- [`689a62d9`](http://github.com/seleniumhq/docker-selenium/commit/689a62d96a6d558e06843ed36970dbece497fb6b) - chore(deps): Update Helm release jaeger to v3.3.3 (#2483) :: renovate[bot]
+- [`fcfb16ee`](http://github.com/seleniumhq/docker-selenium/commit/fcfb16eea52e412dffdcb756c3bac78681ad2e71) - Update chart 0.38.0 changelog [skip ci] :: Selenium CI Bot
+
+### Experimental
+- Selenium Grid Scaler implementation preview. [README](https://github.com/seleniumhq/docker-selenium/tree/trunk/.keda/README.md)
+
+## :heavy_check_mark: selenium-grid-0.38.0
+
+- Chart is using image tag 4.27.0-20241127
+- Chart is tested on Kubernetes versions: v1.25.16, v1.26.15, v1.27.16, v1.28.15, v1.29.10, v1.30.6, v1.31.2, 
+- Chart is tested on container runtime Docker versions: 24.0.9, 24.0.9, 24.0.9, 24.0.9, 25.0.5, 26.1.4, 27.3.1, 
+- Chart is tested on Helm versions: v3.11.3, v3.11.3, v3.12.3, v3.13.3, v3.14.3, v3.15.4, v3.16.3, 
+
+### Changed
+- [`c5e10a7c`](http://github.com/seleniumhq/docker-selenium/commit/c5e10a7c7f8e6538f5bee7079a7d6f7e0587368b) - Update tag 4.27.0-20241127 in docs and files :: Selenium CI Bot
+- [`4e202839`](http://github.com/seleniumhq/docker-selenium/commit/4e202839343e5671f420a2d4af3dcc03749d732e) - [ci] Update command to get host ip in runners :: Viet Nguyen Duc
+- [`60603842`](http://github.com/seleniumhq/docker-selenium/commit/606038425ba721ba57a1ae9038c187cb2490e9fd) - chore(deps): update helm release kube-prometheus-stack to v66 (#2461) :: renovate[bot]
+- [`7727b6d8`](http://github.com/seleniumhq/docker-selenium/commit/7727b6d8881728d4cc9f37d173646307329fd3c2) - K8s: Use KEDA patch image tag for scaler implementation preview (#2477) :: Viet Nguyen Duc
+- [`bea0769a`](http://github.com/seleniumhq/docker-selenium/commit/bea0769a998216d4a0c2a82b2a6e19139596ceca) - K8s: Multiple nodes browser in Helm configs (#2475) :: Viet Nguyen Duc
+- [`3dddb7d0`](http://github.com/seleniumhq/docker-selenium/commit/3dddb7d0027adbf56b9e287888ec05f309d04c07) - K8s: Update ScaledJob scaling strategy to `eager` as default (#2466) :: Viet Nguyen Duc
+- [`33471fe8`](http://github.com/seleniumhq/docker-selenium/commit/33471fe8e1aa48efdf52937262b2bfed86ef1e07) - K8s: Deployment scale metricType should be Value instead of AverageValue (#2465) :: Viet Nguyen Duc
+- [`bf73ae98`](http://github.com/seleniumhq/docker-selenium/commit/bf73ae985f20b8363c3c46d414965a64036ef390) - Update chart 0.37.1 changelog [skip ci] :: Selenium CI Bot
+
+### Experimental
+- Selenium Grid Scaler implementation preview. [README](https://github.com/seleniumhq/docker-selenium/tree/trunk/.keda/README.md)
+
 ## :heavy_check_mark: selenium-grid-0.37.1
 
 - Chart is using image tag 4.26.0-20241101

@@ -13,9 +13,9 @@ The stable implementation will be merged to the upstream KEDA repository frequen
 Replace the image registry and tag of these KEDA components with the patched image tag:
 
 ```bash
-docker pull selenium/keda:2.15.1-selenium-grid-20241101
-docker pull selenium/keda-metrics-apiserver:2.15.1-selenium-grid-20241101
-docker pull selenium/keda-admission-webhooks:2.15.1-selenium-grid-20241101
+docker pull selenium/keda:2.16.0-selenium-grid-20241204
+docker pull selenium/keda-metrics-apiserver:2.16.0-selenium-grid-20241204
+docker pull selenium/keda-admission-webhooks:2.16.0-selenium-grid-20241204
 ```
 
 Besides that, you also can use image tag `latest` or `nightly`.
@@ -27,15 +27,15 @@ If you are deploying KEDA core using their official Helm [chart](https://github.
     keda:
       registry: selenium
       repository: keda
-      tag: "2.15.1-selenium-grid-20241101"
+      tag: "2.16.0-selenium-grid-20241204"
     metricsApiServer:
       registry: selenium
       repository: keda-metrics-apiserver
-      tag: "2.15.1-selenium-grid-20241101"
+      tag: "2.16.0-selenium-grid-20241204"
     webhooks:
       registry: selenium
       repository: keda-admission-webhooks
-      tag: "2.15.1-selenium-grid-20241101"
+      tag: "2.16.0-selenium-grid-20241204"
 ```
 
 If you are deployment Selenium Grid chart with `autoscaling.enabled` is `true` (implies installing KEDA sub-chart), KEDA images registry and tag already set in the `values.yaml`. Refer to list [configuration](../charts/selenium-grid/CONFIGURATION.md).
@@ -49,11 +49,26 @@ You can involve to review and discuss the pull requests to help us early detect 
 
 [kedacore/keda](https://github.com/kedacore/keda)
 
-- https://github.com/kedacore/keda/pull/6169
+- https://github.com/kedacore/keda/pull/6368
+
+- ~~https://github.com/kedacore/keda/pull/6169 (merged, v2.16.0)~~
 
 [kedacore/keda-docs](https://github.com/kedacore/keda-docs)
 
-- https://github.com/kedacore/keda-docs/pull/1468
+- ~~https://github.com/kedacore/keda-docs/pull/1468 (merged, v2.16.0)~~
+
+# Test results of the patch scaler
+
+There are tests for the patched scaler implementation. You can run the tests by following the steps in [../tests/README.md](../tests/README.md).
+
+Test results could be referred to
+
+- [results_test_k8s_autoscaling_job_count_strategy_default.md](./results_test_k8s_autoscaling_job_count_strategy_default.md)
+- [results_test_k8s_autoscaling_job_count_strategy_default_in_chaos.md](./results_test_k8s_autoscaling_job_count_strategy_default_in_chaos.md)
+- [results_test_k8s_autoscaling_job_count_strategy_default_with_node_max_sessions.md](./results_test_k8s_autoscaling_job_count_strategy_default_with_node_max_sessions.md)
+- [results_test_k8s_autoscaling_deployment_count.md](./results_test_k8s_autoscaling_deployment_count.md)
+- [results_test_k8s_autoscaling_deployment_count_in_chaos.md](./results_test_k8s_autoscaling_deployment_count_in_chaos.md)
+- [results_test_k8s_autoscaling_deployment_count_with_node_max_sessions.md](./results_test_k8s_autoscaling_deployment_count_with_node_max_sessions.md)
 
 # Resources
 

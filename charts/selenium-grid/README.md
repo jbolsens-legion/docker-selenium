@@ -40,6 +40,7 @@ This chart enables the creation of a Selenium Grid Server in Kubernetes.
       * [TLS termination in the ingress controller, HTTP/2, and related troubleshooting](#tls-termination-in-the-ingress-controller-http2-and-related-troubleshooting)
     * [Node Registration](#node-registration)
     * [Configuration of tracing observability](#configuration-of-tracing-observability)
+    * [Configuration of Session Map using External Datastore](#configuration-of-session-map-using-external-datastore)
     * [Configuration of Selenium Grid chart](#configuration-of-selenium-grid-chart)
     * [Configuration of KEDA](#configuration-of-keda)
     * [Configuration of Ingress NGINX Controller](#configuration-of-ingress-nginx-controller)
@@ -84,7 +85,7 @@ helm install selenium-grid --set ingress.hostname=selenium-grid.k8s.local docker
 # Verify ingress configuration via kubectl get ingress
 
 # Notes: In case you want to set hostname is selenium-grid.local. You need to add the IP and hostname to the local host file in `/etc/hosts`
-sudo -- sh -c -e "echo \"$(hostname -i) selenium-grid.local\" >> /etc/hosts"
+sudo -- sh -c -e "echo \"$(hostname -I | cut -d' ' -f1) selenium-grid.local\" >> /etc/hosts"
 ```
 
 ### Installing the Nightly chart
@@ -795,7 +796,7 @@ For example (replace `$RELEASENAME` and `$NAMESPACE` with your values):
 
 ```bash
 helm upgrade -i $RELEASENAME -n $NAMESPACE docker-selenium/selenium-grid \
-  --set global.K8S_PUBLIC_IP=$(hostname -i) \
+  --set global.K8S_PUBLIC_IP=$(hostname -I | cut -d' ' -f1) \
   --set tls.ingress.enableWithController=true \
   --set tls.create=false \
   --set tls.nameOverride=my-external-tls-secret \
@@ -872,6 +873,38 @@ tracing:
 
 By default, the exporter is set to `otlp`. It is wide compatibility with many tracing backends.
 Read more: [vendors](https://opentelemetry.io/ecosystem/vendors/) native support OpenTelemetry and guidelines on [integration](https://opentelemetry.io/ecosystem/integrations/)
+
+### Configuration of Session Map using External Datastore
+
+Feature [documentation](https://www.selenium.dev/documentation/grid/advanced_features/external_datastore/). It requires the Grid deployed in distributed mode. The feature is disabled by default.
+
+To enable it with Database backed Session Map, also install PostgreSQL service in the same namespace as Selenium Grid. You can set the following values:
+
+```yaml
+isolateComponents: true
+components:
+  sessionMap:
+    externalDatastore:
+      enabled: true
+      backend: postgresql
+
+postgresql:
+  enabled: true
+```
+
+To enable it with Redis backed Session Map, also install Redis service in the same namespace as Selenium Grid. You can set the following values:
+
+```yaml
+isolateComponents: true
+components:
+  sessionMap:
+    externalDatastore:
+      enabled: true
+      backend: redis
+
+redis:
+  enabled: true
+```
 
 ### Configuration of Selenium Grid chart
 

@@ -7,11 +7,11 @@ global:
     # -- Image registry for all selenium components
     imageRegistry: selenium
     # -- Image tag for all selenium components
-    imageTag: 4.26.0-20241101
+    imageTag: 4.27.0-20241204
     # -- Image tag for browser's nodes
-    nodesImageTag: 4.26.0-20241101
+    nodesImageTag: 4.27.0-20241204
     # -- Image tag for browser's video recorder
-    videoImageTag: ffmpeg-7.1-20241101
+    videoImageTag: ffmpeg-7.1-20241204
     # -- kubectl image is used to execute kubectl commands in utility jobs
     kubectlImage: bitnami/kubectl:latest
     # -- Pull secret for all components, can be overridden individually
@@ -231,6 +231,13 @@ ingress:
 # ConfigMap that contains SE_EVENT_BUS_HOST, SE_EVENT_BUS_PUBLISH_PORT and SE_EVENT_BUS_SUBSCRIBE_PORT variables
 busConfigMap:
   # -- Override the name of the bus configMap
+  nameOverride:
+  # -- Custom annotations for configmap
+  annotations: {}
+
+# ConfigMap that contains environment variables for session map
+sessionMapConfigMap:
+  # -- Override the name of the session map configMap
   nameOverride:
   # -- Custom annotations for configmap
   annotations: {}
@@ -597,6 +604,23 @@ components:
     nodeSelector: {}
     # -- Priority class name for Session Map pods
     priorityClassName: ""
+    externalDatastore:
+      # -- Enable external datastore for Session Map
+      enabled: false
+      # -- Backend for external datastore (supported: postgresql, redis). Details for each backend are described below config key
+      backend: postgresql
+      # -- Configure database backed Session Map (https://www.selenium.dev/documentation/grid/advanced_features/external_datastore/#database-backed-session-map)
+      postgresql:
+        implementation: "org.openqa.selenium.grid.sessionmap.jdbc.JdbcBackedSessionMap"
+        jdbcUser: "seluser"
+        jdbcPassword: "seluser"
+        jdbcUrl: "jdbc:postgresql://{{ $.Release.Name }}-postgresql:5432/selenium_sessions"
+      # -- Configure Redis backed Session Map (https://www.selenium.dev/documentation/grid/advanced_features/external_datastore/#redis-backed-session-map)
+      redis:
+        scheme: "redis"
+        implementation: "org.openqa.selenium.grid.sessionmap.redis.RedisBackedSessionMap"
+        hostname: "{{ $.Release.Name }}-redis-master"
+        port: "6379"
 
   # Configuration for Session Queue component
   sessionQueue:
@@ -838,10 +862,10 @@ autoscaling:
       # TriggerAuthentication is used by ScaledObject/ScaledJob, hence weight should be less than those hooks
       "helm.sh/hook-weight": "0"
   # Configuration for ScaledObject triggers https://keda.sh/docs/latest/reference/scaledobject-spec/#triggers
-  # -- Enables caching of metric values during polling interval (as specified in .spec.pollingInterval).
+  # -- Enables caching of metric values during polling interval (as specified in .spec.pollingInterval, the default: false in KEDA).
   useCachedMetrics: false
-  # -- The type of metric that should be used (Override the default: AverageValue in KEDA)
-  metricType: Value
+  # -- The type of metric that should be used (The default: AverageValue in KEDA)
+  metricType: ""
   # -- Annotations for KEDA resources: ScaledObject and ScaledJob
   annotations:
     "helm.sh/hook": post-install,post-upgrade,post-rollback
@@ -877,17 +901,16 @@ autoscaling:
     # -- Minimum number of replicas
     minReplicaCount: 0
     # -- Maximum number of replicas
-    maxReplicaCount: 8
+    maxReplicaCount: 24
     # -- Polling interval in seconds
-    pollingInterval: 10
+    pollingInterval: 20
     # List of triggers. Be careful, the default trigger of selenium-grid will be overwritten if you specify this
     # triggers:
   # Options for KEDA ScaledJobs (only used when scalingType is set to "job"). See https://keda.sh/docs/latest/concepts/scaling-jobs/#scaledjob-spec
   scaledJobOptions:
     scalingStrategy:
-      # Use `eager` strategy for utilizing all available slots up to the maxReplicaCount, ensuring that waiting request are processed as quickly as possible.
       # -- Scaling strategy for KEDA ScaledJob - https://keda.sh/docs/latest/reference/scaledjob-spec/#scalingstrategy
-      strategy: eager
+      strategy: default
     # -- Number of Completed jobs should be kept
     successfulJobsHistoryLimit: 0
     # -- Number of Failed jobs should be kept (for troubleshooting purposes)
@@ -909,6 +932,24 @@ autoscaling:
   #  preStop:
   #    exec:
   #      command: [ "bash", "-c", "/opt/bin/nodePreStop.sh" ]
+
+# Configuration additional nodes with different versions, capabilities, etc.
+crossBrowsers:
+  # -- Additional chrome nodes, array of objects with the same structure as `chromeNode`
+  chromeNode:
+    - nameOverride:
+  # - Refer to file `cross-browsers-values.yaml` to configure additional nodes
+  # -- Additional firefox nodes, array of objects with the same structure as `firefoxNode`
+  firefoxNode:
+    - nameOverride:
+  # - Refer to file `cross-browsers-values.yaml` to configure additional node browsers
+  # -- Additional edge nodes, array of objects with the same structure as `edgeNode`
+  edgeNode:
+    - nameOverride:
+  # - Refer to file `cross-browsers-values.yaml` to configure additional node browsers
+  # -- Additional release nodes, array of objects with the same structure as `relayNode`
+  relayNode:
+    - nameOverride:
 
 # Configuration for chrome nodes
 chromeNode:
@@ -1776,6 +1817,20 @@ customLabels: {}
 # Configuration for dependency chart keda
 keda:
   # enabled: false
+  # -- Specify image for KEDA components
+  image:
+    keda:
+      registry: selenium
+      repository: keda
+      tag: "2.16.0-selenium-grid-20241204"
+    metricsApiServer:
+      registry: selenium
+      repository: keda-metrics-apiserver
+      tag: "2.16.0-selenium-grid-20241204"
+    webhooks:
+      registry: selenium
+      repository: keda-admission-webhooks
+      tag: "2.16.0-selenium-grid-20241204"
   # -- Annotations for KEDA resources
   additionalAnnotations:
   http:
@@ -1819,4 +1874,36 @@ jaeger:
   collector:
     enabled: false
   query:
+    enabled: false
+
+# Configuration for dependency chart PostgreSQL (README: https://artifacthub.io/packages/helm/bitnami/postgresql)
+postgresql:
+  # -- Enable to install PostgreSQL along with Grid
+  enabled: false
+  # -- Authentication should be aligned with config in session map
+  auth:
+    username: "seluser"
+    password: "seluser"
+    database: "selenium_sessions"
+  primary:
+    initdb:
+      # -- Initdb scripts for PostgreSQL to create sessions_map table
+      scripts:
+        init.sql: |
+          CREATE TABLE IF NOT EXISTS sessions_map(
+            session_ids varchar(256),
+            session_caps text,
+            session_uri varchar(256),
+            session_stereotype text,
+            session_start varchar(256)
+          );
+
+# Configuration for dependency chart Redis (README: https://artifacthub.io/packages/helm/bitnami/redis)
+redis:
+  # -- Enable to install Redis along with Grid
+  enabled: false
+  # -- Setup architecture
+  architecture: standalone
+  auth:
+    # -- Disable authentication due to implementation still not supporting it
     enabled: false

@@ -30,7 +30,7 @@ SERVER_KEYSTORE=${SERVER_KEYSTORE:-server.jks}
 SERVER_KEYSTORE_PASSPWD=${SERVER_KEYSTORE_PASSPWD:-server.pass}
 BASE64_ONLY=${BASE64_ONLY:-0}
 if [ -n "${ADD_IP_ADDRESS}" ] && [ "${ADD_IP_ADDRESS}" = "hostname" ]; then
-  ADD_IP_ADDRESS=",IP:$(hostname -I | awk '{print $1}')"
+  ADD_IP_ADDRESS=",IP:$(hostname -I | cut -d' ' -f1)"
 else
   ADD_IP_ADDRESS=${ADD_IP_ADDRESS}
 fi

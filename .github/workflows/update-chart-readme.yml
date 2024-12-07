@@ -1,6 +1,14 @@
 name: Update chart configuration table
 
 on:
+  push:
+    branches:
+      - 'renovate/*'
+  pull_request:
+    types:
+      - opened
+    branches:
+      - 'renovate/**'
   workflow_dispatch:
 
 jobs:

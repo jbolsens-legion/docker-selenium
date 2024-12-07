@@ -115,22 +115,31 @@ components:
     annotations:
       "restartOnUpdate": "true"
     serviceType: NodePort
+    externalDatastore:
+      enabled: true
+      backend: postgresql
 
 chromeNode:
   nodeMaxSessions: 2
   annotations:
     "restartOnUpdate": "true"
   terminationGracePeriodSeconds: 7200
+  service:
+    enabled: true
 
 firefoxNode:
   nodeMaxSessions: 1
   annotations:
     "restartOnUpdate": "true"
   terminationGracePeriodSeconds: 720
+  service:
+    enabled: true
 
 edgeNode:
   annotations:
     "restartOnUpdate": "true"
+  service:
+    enabled: true
   videoRecorder:
     uploader:
       enabled: false

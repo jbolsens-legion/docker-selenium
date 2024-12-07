@@ -1,4 +1,4 @@
-FROM ubuntu:noble-20241015
+FROM ubuntu:noble-20241118.1
 ARG AUTHORS=SeleniumHQ
 LABEL authors="${AUTHORS} <selenium-developers@googlegroups.com>"
 LABEL org.opencontainers.image.source="https://github.com/${AUTHORS}/docker-selenium"
@@ -7,10 +7,12 @@ LABEL org.opencontainers.image.source="https://github.com/${AUTHORS}/docker-sele
 ARG VERSION
 ARG RELEASE=selenium-${VERSION}
 # Default value should be aligned with upstream Selenium (https://github.com/SeleniumHQ/selenium/blob/trunk/MODULE.bazel)
-ARG OPENTELEMETRY_VERSION=1.43.0
-ARG GRPC_VERSION=1.68.0
+ARG OPENTELEMETRY_VERSION=1.44.1
+ARG GRPC_VERSION=1.68.1
 ARG NETTY_VERSION=4.1.115.Final
-ARG CS_VERSION=2.1.13
+ARG CS_VERSION=2.1.18
+ARG POSTGRESQL_VERSION=42.7.4
+ARG MVN_SELENIUM_VERSION=4.27.0
 
 #Arguments to define the user running Selenium
 ARG SEL_USER=seluser
@@ -120,8 +122,16 @@ RUN --mount=type=secret,id=SEL_PASSWD \
   && if [ -f "/tmp/cs" ]; then \
         java -jar /tmp/cs fetch --classpath --cache /external_jars \
         io.opentelemetry:opentelemetry-exporter-otlp:${OPENTELEMETRY_VERSION} \
-        io.grpc:grpc-netty:${GRPC_VERSION} io.netty:netty-codec-http:${NETTY_VERSION} > /external_jars/.classpath.txt \
-        && chmod 664 /external_jars/.classpath.txt ; \
+        io.grpc:grpc-netty:${GRPC_VERSION} \
+        io.netty:netty-codec-http:${NETTY_VERSION} \
+        > /external_jars/.classpath.txt \
+        && chmod 664 /external_jars/.classpath.txt \
+        && java -jar /tmp/cs fetch --classpath --cache /external_jars \
+        org.seleniumhq.selenium:selenium-session-map-jdbc:${MVN_SELENIUM_VERSION} \
+        org.postgresql:postgresql:${POSTGRESQL_VERSION} \
+        org.seleniumhq.selenium:selenium-session-map-redis:${MVN_SELENIUM_VERSION} \
+        > /external_jars/.classpath_session_map.txt \
+        && chmod 664 /external_jars/.classpath_session_map.txt ; \
      fi \
   && rm -fr /root/.cache/* \
   # (Note that .bashrc is only executed in interactive bash shells.)
@@ -167,6 +177,8 @@ ENV SE_BIND_HOST=false \
     SE_SUPERVISORD_CHILD_LOG_DIR="/tmp" \
     SE_SUPERVISORD_LOG_FILE="/tmp/supervisord.log" \
     SE_SUPERVISORD_PID_FILE="/tmp/supervisord.pid" \
+    SE_SUPERVISORD_AUTO_RESTART=true \
+    SE_SUPERVISORD_START_RETRIES=5 \
     SE_LOG_TIMESTAMP_FORMAT="%Y-%m-%d %H:%M:%S,%3N" \
     SE_LOG_LEVEL="INFO" \
     SE_HTTP_LOGS=false \

@@ -1,6 +1,6 @@
 # selenium-grid
 
-![Version: 0.37.1](https://img.shields.io/badge/Version-0.37.1-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 4.26.0-20241101](https://img.shields.io/badge/AppVersion-4.26.0--20241101-informational?style=flat-square)
+![Version: 0.38.1](https://img.shields.io/badge/Version-0.38.1-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 4.27.0-20241204](https://img.shields.io/badge/AppVersion-4.27.0--20241204-informational?style=flat-square)
 
 A Helm chart for creating a Selenium Grid Server in Kubernetes
 
@@ -18,10 +18,12 @@ A Helm chart for creating a Selenium Grid Server in Kubernetes
 
 | Repository | Name | Version |
 |------------|------|---------|
-| https://jaegertracing.github.io/helm-charts | jaeger | 3.3.2 |
+| https://charts.bitnami.com/bitnami | postgresql | 16.2.4 |
+| https://charts.bitnami.com/bitnami | redis | 20.4.0 |
+| https://jaegertracing.github.io/helm-charts | jaeger | 3.3.3 |
 | https://kedacore.github.io/charts | keda | 2.16.0 |
 | https://kubernetes.github.io/ingress-nginx | ingress-nginx | 4.11.3 |
-| https://prometheus-community.github.io/helm-charts | kube-prometheus-stack | 65.8.1 |
+| https://prometheus-community.github.io/helm-charts | kube-prometheus-stack | 66.3.0 |
 
 ## Values
 
@@ -29,9 +31,9 @@ A Helm chart for creating a Selenium Grid Server in Kubernetes
 |-----|------|---------|-------------|
 | global.K8S_PUBLIC_IP | string | `""` | Public IP of the host running Kubernetes cluster. This is used to access the Selenium Grid from outside the cluster when ingress is disabled or enabled without a hostname is set. This is part of constructing SE_NODE_GRID_URL and rewrite URL of `se:vnc`, `se:cdp` in the capabilities when `ingress.hostname` is unset |
 | global.seleniumGrid.imageRegistry | string | `"selenium"` | Image registry for all selenium components |
-| global.seleniumGrid.imageTag | string | `"4.26.0-20241101"` | Image tag for all selenium components |
-| global.seleniumGrid.nodesImageTag | string | `"4.26.0-20241101"` | Image tag for browser's nodes |
-| global.seleniumGrid.videoImageTag | string | `"ffmpeg-7.1-20241101"` | Image tag for browser's video recorder |
+| global.seleniumGrid.imageTag | string | `"4.27.0-20241204"` | Image tag for all selenium components |
+| global.seleniumGrid.nodesImageTag | string | `"4.27.0-20241204"` | Image tag for browser's nodes |
+| global.seleniumGrid.videoImageTag | string | `"ffmpeg-7.1-20241204"` | Image tag for browser's video recorder |
 | global.seleniumGrid.kubectlImage | string | `"bitnami/kubectl:latest"` | kubectl image is used to execute kubectl commands in utility jobs |
 | global.seleniumGrid.imagePullSecret | string | `""` | Pull secret for all components, can be overridden individually |
 | global.seleniumGrid.logLevel | string | `"INFO"` | Log level for all components. Possible values describe here: https://www.selenium.dev/documentation/grid/configuration/cli_options/#logging |
@@ -109,6 +111,8 @@ A Helm chart for creating a Selenium Grid Server in Kubernetes
 | ingress.tls | list | `[]` | TLS backend configuration for ingress resource |
 | busConfigMap.nameOverride | string | `nil` | Override the name of the bus configMap |
 | busConfigMap.annotations | object | `{}` | Custom annotations for configmap |
+| sessionMapConfigMap.nameOverride | string | `nil` | Override the name of the session map configMap |
+| sessionMapConfigMap.annotations | object | `{}` | Custom annotations for configmap |
 | distributorConfigMap.nameOverride | string | `nil` | Override the name of the distributor configMap |
 | distributorConfigMap.defaultMode | int | `493` | Default mode for ConfigMap is mounted as file |
 | distributorConfigMap.extraScriptsImportFrom | string | `"configs/distributor/**"` | Directory where the extra scripts are imported to ConfigMap by default (if given a relative path, it should be in chart's directory) |
@@ -244,6 +248,10 @@ A Helm chart for creating a Selenium Grid Server in Kubernetes
 | components.sessionMap.tolerations | list | `[]` | Tolerations for Session Map pods |
 | components.sessionMap.nodeSelector | object | `{}` | Node selector for Session Map pods |
 | components.sessionMap.priorityClassName | string | `""` | Priority class name for Session Map pods |
+| components.sessionMap.externalDatastore.enabled | bool | `false` | Enable external datastore for Session Map |
+| components.sessionMap.externalDatastore.backend | string | `"postgresql"` | Backend for external datastore (supported: postgresql, redis). Details for each backend are described below config key |
+| components.sessionMap.externalDatastore.postgresql | object | `{"implementation":"org.openqa.selenium.grid.sessionmap.jdbc.JdbcBackedSessionMap","jdbcPassword":"seluser","jdbcUrl":"jdbc:postgresql://{{ $.Release.Name }}-postgresql:5432/selenium_sessions","jdbcUser":"seluser"}` | Configure database backed Session Map (https://www.selenium.dev/documentation/grid/advanced_features/external_datastore/#database-backed-session-map) |
+| components.sessionMap.externalDatastore.redis | object | `{"hostname":"{{ $.Release.Name }}-redis-master","implementation":"org.openqa.selenium.grid.sessionmap.redis.RedisBackedSessionMap","port":"6379","scheme":"redis"}` | Configure Redis backed Session Map (https://www.selenium.dev/documentation/grid/advanced_features/external_datastore/#redis-backed-session-map) |
 | components.sessionQueue.imageRegistry | string | `nil` | Registry to pull the image (this overwrites global.seleniumGrid.imageRegistry parameter) |
 | components.sessionQueue.imageName | string | `"session-queue"` | Session Queue image name |
 | components.sessionQueue.imageTag | string | `nil` | Session Queue image tag (this overwrites global.seleniumGrid.imageTag parameter) |
@@ -327,8 +335,8 @@ A Helm chart for creating a Selenium Grid Server in Kubernetes
 | autoscaling.enableWithExistingKEDA | bool | `false` | Enable autoscaling without automatically installing KEDA |
 | autoscaling.scalingType | string | `"job"` | Which type of KEDA scaling to use: job or deployment |
 | autoscaling.authenticationRef | object | `{"annotations":{"helm.sh/hook":"post-install,post-upgrade,post-rollback","helm.sh/hook-weight":"0"},"name":""}` | Specify an external KEDA TriggerAuthentication resource is used for scaler triggers config. Apply for all browser nodes |
-| autoscaling.useCachedMetrics | bool | `false` | Enables caching of metric values during polling interval (as specified in .spec.pollingInterval). |
-| autoscaling.metricType | string | `"Value"` | The type of metric that should be used (Override the default: AverageValue in KEDA) |
+| autoscaling.useCachedMetrics | bool | `false` | Enables caching of metric values during polling interval (as specified in .spec.pollingInterval, the default: false in KEDA). |
+| autoscaling.metricType | string | `""` | The type of metric that should be used (The default: AverageValue in KEDA) |
 | autoscaling.annotations | object | `{"helm.sh/hook":"post-install,post-upgrade,post-rollback","helm.sh/hook-weight":"1"}` | Annotations for KEDA resources: ScaledObject and ScaledJob |
 | autoscaling.patchObjectFinalizers.nameOverride | string | `nil` | Override the name of the patch job |
 | autoscaling.patchObjectFinalizers.enabled | bool | `true` | Enable patching finalizers for KEDA scaled resources. Workaround for Hook post-upgrade selenium-grid/templates/x-node-hpa.yaml failed: object is being deleted: scaledobjects.keda.sh "x" already exists |
@@ -337,17 +345,21 @@ A Helm chart for creating a Selenium Grid Server in Kubernetes
 | autoscaling.patchObjectFinalizers.serviceAccount | string | `""` | Define an external service account name contains permissions to patch KEDA scaled resources |
 | autoscaling.patchObjectFinalizers.imagePullSecret | string | `""` | Custom pull secret for container in patch job |
 | autoscaling.patchObjectFinalizers.resources | object | `{"limits":{"cpu":"200m","memory":"500Mi"},"requests":{"cpu":"100m","memory":"200Mi"}}` | Define resources for container in patch job |
-| autoscaling.scaledOptions | object | `{"maxReplicaCount":8,"minReplicaCount":0,"pollingInterval":10}` | Options for KEDA scaled resources (keep only common options used for both ScaledJob and ScaledObject) |
+| autoscaling.scaledOptions | object | `{"maxReplicaCount":24,"minReplicaCount":0,"pollingInterval":20}` | Options for KEDA scaled resources (keep only common options used for both ScaledJob and ScaledObject) |
 | autoscaling.scaledOptions.minReplicaCount | int | `0` | Minimum number of replicas |
-| autoscaling.scaledOptions.maxReplicaCount | int | `8` | Maximum number of replicas |
-| autoscaling.scaledOptions.pollingInterval | int | `10` | Polling interval in seconds |
-| autoscaling.scaledJobOptions.scalingStrategy.strategy | string | `"eager"` | Scaling strategy for KEDA ScaledJob - https://keda.sh/docs/latest/reference/scaledjob-spec/#scalingstrategy |
+| autoscaling.scaledOptions.maxReplicaCount | int | `24` | Maximum number of replicas |
+| autoscaling.scaledOptions.pollingInterval | int | `20` | Polling interval in seconds |
+| autoscaling.scaledJobOptions.scalingStrategy.strategy | string | `"default"` | Scaling strategy for KEDA ScaledJob - https://keda.sh/docs/latest/reference/scaledjob-spec/#scalingstrategy |
 | autoscaling.scaledJobOptions.successfulJobsHistoryLimit | int | `0` | Number of Completed jobs should be kept |
 | autoscaling.scaledJobOptions.failedJobsHistoryLimit | int | `0` | Number of Failed jobs should be kept (for troubleshooting purposes) |
 | autoscaling.scaledJobOptions.jobTargetRef | object | `{"backoffLimit":0,"completions":1,"parallelism":1}` | Specify job target ref for KEDA ScaledJob |
 | autoscaling.scaledObjectOptions.scaleTargetRef.kind | string | `"Deployment"` | Target reference for KEDA ScaledObject |
 | autoscaling.terminationGracePeriodSeconds | int | `3600` | Define terminationGracePeriodSeconds for scalingType "deployment". Period for `deregisterLifecycle` to gracefully shut down the node before force terminating it |
 | autoscaling.deregisterLifecycle | string | `nil` | Define preStop command to shut down the node gracefully when scalingType is set to "deployment" |
+| crossBrowsers.chromeNode | list | `[{"nameOverride":null}]` | Additional chrome nodes, array of objects with the same structure as `chromeNode` |
+| crossBrowsers.firefoxNode | list | `[{"nameOverride":null}]` | Additional firefox nodes, array of objects with the same structure as `firefoxNode` |
+| crossBrowsers.edgeNode | list | `[{"nameOverride":null}]` | Additional edge nodes, array of objects with the same structure as `edgeNode` |
+| crossBrowsers.relayNode | list | `[{"nameOverride":null}]` | Additional release nodes, array of objects with the same structure as `relayNode` |
 | chromeNode.enabled | bool | `true` | Enable chrome nodes |
 | chromeNode.deploymentEnabled | bool | `true` | NOTE: Only used when autoscaling.enabled is false Enable creation of Deployment true (default) - if you want long-living pods false - for provisioning your own custom type such as Jobs |
 | chromeNode.updateStrategy | object | `{"type":"RollingUpdate"}` | Global update strategy will be overwritten by individual component |
@@ -579,10 +591,17 @@ A Helm chart for creating a Selenium Grid Server in Kubernetes
 | videoRecorder.extraVolumes | list | `[]` | Extra volumes for video recorder pod |
 | videoRecorder.s3 | object | `{"args":[],"command":[],"extraEnvironmentVariables":null,"imageName":"aws-cli","imagePullPolicy":"IfNotPresent","imageRegistry":"bitnami","imageTag":"latest","securityContext":{"runAsUser":0}}` | Container spec for the uploader if above it is defined as "uploader.name: s3" |
 | customLabels | object | `{}` | Custom labels for k8s resources |
+| keda.image | object | `{"keda":{"registry":"selenium","repository":"keda","tag":"2.16.0-selenium-grid-20241204"},"metricsApiServer":{"registry":"selenium","repository":"keda-metrics-apiserver","tag":"2.16.0-selenium-grid-20241204"},"webhooks":{"registry":"selenium","repository":"keda-admission-webhooks","tag":"2.16.0-selenium-grid-20241204"}}` | Specify image for KEDA components |
 | keda.additionalAnnotations | string | `nil` | Annotations for KEDA resources |
 | keda.http.timeout | int | `60000` |  |
 | keda.webhooks | object | `{"enabled":false}` | Enable KEDA admission webhooks component |
 | ingress-nginx | object | `{"controller":{"admissionWebhooks":{"enabled":false}}}` | Configuration for dependency chart ingress-nginx |
 | kube-prometheus-stack | object | `{"cleanPrometheusOperatorObjectNames":true,"prometheus":{"prometheusSpec":{"additionalConfig":{"additionalScrapeConfigs":{"key":"{{ template \"seleniumGrid.monitoring.scrape.key\" $ }}","name":"{{ template \"seleniumGrid.monitoring.exporter.fullname\" $ }}"}}}}}` | Configuration for dependency chart kube-prometheus-stack |
 | jaeger | object | `{"agent":{"enabled":false},"allInOne":{"enabled":true,"extraEnv":[{"name":"QUERY_BASE_PATH","value":"/jaeger"}]},"collector":{"enabled":false},"provisionDataStore":{"cassandra":false},"query":{"enabled":false},"storage":{"type":"badger"}}` | Configuration for dependency chart jaeger |
+| postgresql.enabled | bool | `false` | Enable to install PostgreSQL along with Grid |
+| postgresql.auth | object | `{"database":"selenium_sessions","password":"seluser","username":"seluser"}` | Authentication should be aligned with config in session map |
+| postgresql.primary.initdb.scripts | object | `{"init.sql":"CREATE TABLE IF NOT EXISTS sessions_map(\n  session_ids varchar(256),\n  session_caps text,\n  session_uri varchar(256),\n  session_stereotype text,\n  session_start varchar(256)\n);\n"}` | Initdb scripts for PostgreSQL to create sessions_map table |
+| redis.enabled | bool | `false` | Enable to install Redis along with Grid |
+| redis.architecture | string | `"standalone"` | Setup architecture |
+| redis.auth.enabled | bool | `false` | Disable authentication due to implementation still not supporting it |
 
