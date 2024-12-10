@@ -50,6 +50,7 @@ ENV LANG_WHICH=${LANG_WHICH} \
 #============================
 # Some configuration options
 #============================
+    SE_RECORD_VIDEO=false \
     SE_SCREEN_WIDTH=1920 \
     SE_SCREEN_HEIGHT=1080 \
     SE_SCREEN_DEPTH=24 \
